@@ -17,13 +17,19 @@ class ProxySource(BaseModel):
     url: str
     parser: Literal["sslproxies", "spysone", "proxydownload", "plaintext", "geonode"]
     type: str = "http"
+    limit: int | None = None
 
 
 class TestSettings(BaseModel):
     url: str = "http://httpbin.org/ip"
     timeout: float = 5.0
     max_workers: int = 50
-    recheck_interval_minutes: int = 30
+    recheck_interval_minutes: int = 5
+    scrape_interval_minutes: int = 10
+    scrape_candidate_limit: int = 3000
+    scrape_on_startup: bool = True
+    store_only_alive: bool = True
+    delete_dead_after_check: bool = True
 
 
 class FilterSettings(BaseModel):

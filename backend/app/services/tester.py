@@ -66,9 +66,34 @@ async def test_proxy_batch(session: Session, proxies: list[Proxy]) -> list[Proxy
         proxy = await task
         tested += 1
         valid += 1 if proxy.status == "alive" else 0
-        session.add(proxy)
-        session.commit()
-        session.refresh(proxy)
+        if settings.config.test.delete_dead_after_check and proxy.status == "dead" and proxy.id is not None:
+            session.delete(proxy)
+            session.commit()
+        else:
+            session.add(proxy)
+            session.commit()
+            session.refresh(proxy)
+        await emit_progress(tested, total, valid)
+        results.append(proxy)
+    return results
+
+
+async def test_proxy_candidates(proxies: list[Proxy]) -> list[Proxy]:
+    settings = get_settings()
+    semaphore = asyncio.Semaphore(settings.config.test.max_workers)
+    total = len(proxies)
+    tested = 0
+    valid = 0
+    results: list[Proxy] = []
+
+    async def run_one(proxy: Proxy) -> Proxy:
+        async with semaphore:
+            return await test_proxy(proxy)
+
+    for task in asyncio.as_completed([run_one(proxy) for proxy in proxies]):
+        proxy = await task
+        tested += 1
+        valid += 1 if proxy.status == "alive" else 0
         await emit_progress(tested, total, valid)
         results.append(proxy)
     return results
@@ -80,4 +105,3 @@ def select_expired_proxies(session: Session) -> list[Proxy]:
     threshold = datetime.now(UTC) - interval
     statement = select(Proxy).where((Proxy.last_checked == None) | (Proxy.last_checked < threshold))  # noqa: E711
     return list(session.exec(statement).all())
-

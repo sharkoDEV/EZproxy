@@ -16,6 +16,11 @@
       "parser": "sslproxies"
     },
     {
+      "name": "FreeProxyListSOCKS",
+      "url": "https://free-proxy-list.net/socks-proxy.html",
+      "parser": "sslproxies"
+    },
+    {
       "name": "SpysOne",
       "url": "https://spys.one/en/free-proxy-list/",
       "parser": "spysone"
@@ -132,13 +137,112 @@
       "name": "GeoNode",
       "url": "https://proxylist.geonode.com/api/proxy-list?limit=500&page=1&sort_by=lastChecked&sort_type=desc",
       "parser": "geonode"
+    },
+    {
+      "name": "R00teeHTTPS",
+      "url": "https://raw.githubusercontent.com/r00tee/Proxy-List/main/Https.txt",
+      "parser": "plaintext",
+      "type": "https",
+      "limit": 3000
+    },
+    {
+      "name": "R00teeSOCKS4",
+      "url": "https://raw.githubusercontent.com/r00tee/Proxy-List/main/Socks4.txt",
+      "parser": "plaintext",
+      "type": "socks4",
+      "limit": 3000
+    },
+    {
+      "name": "R00teeSOCKS5",
+      "url": "https://raw.githubusercontent.com/r00tee/Proxy-List/main/Socks5.txt",
+      "parser": "plaintext",
+      "type": "socks5",
+      "limit": 3000
+    },
+    {
+      "name": "DpangestuwHTTP",
+      "url": "https://raw.githubusercontent.com/dpangestuw/Free-Proxy/refs/heads/main/http_proxies.txt",
+      "parser": "plaintext",
+      "type": "http",
+      "limit": 3000
+    },
+    {
+      "name": "DpangestuwSOCKS4",
+      "url": "https://raw.githubusercontent.com/dpangestuw/Free-Proxy/refs/heads/main/socks4_proxies.txt",
+      "parser": "plaintext",
+      "type": "socks4",
+      "limit": 3000
+    },
+    {
+      "name": "DpangestuwSOCKS5",
+      "url": "https://raw.githubusercontent.com/dpangestuw/Free-Proxy/refs/heads/main/socks5_proxies.txt",
+      "parser": "plaintext",
+      "type": "socks5",
+      "limit": 3000
+    },
+    {
+      "name": "FyvriHTTP",
+      "url": "https://raw.githubusercontent.com/fyvri/fresh-proxy-list/archive/storage/classic/http.txt",
+      "parser": "plaintext",
+      "type": "http",
+      "limit": 3000
+    },
+    {
+      "name": "FyvriHTTPS",
+      "url": "https://raw.githubusercontent.com/fyvri/fresh-proxy-list/archive/storage/classic/https.txt",
+      "parser": "plaintext",
+      "type": "https",
+      "limit": 3000
+    },
+    {
+      "name": "FyvriSOCKS4",
+      "url": "https://raw.githubusercontent.com/fyvri/fresh-proxy-list/archive/storage/classic/socks4.txt",
+      "parser": "plaintext",
+      "type": "socks4",
+      "limit": 3000
+    },
+    {
+      "name": "FyvriSOCKS5",
+      "url": "https://raw.githubusercontent.com/fyvri/fresh-proxy-list/archive/storage/classic/socks5.txt",
+      "parser": "plaintext",
+      "type": "socks5",
+      "limit": 3000
+    },
+    {
+      "name": "JetkaiHTTP",
+      "url": "https://raw.githubusercontent.com/jetkai/proxy-list/main/online-proxies/txt/proxies-http.txt",
+      "parser": "plaintext",
+      "type": "http"
+    },
+    {
+      "name": "JetkaiHTTPS",
+      "url": "https://raw.githubusercontent.com/jetkai/proxy-list/main/online-proxies/txt/proxies-https.txt",
+      "parser": "plaintext",
+      "type": "https"
+    },
+    {
+      "name": "JetkaiSOCKS4",
+      "url": "https://raw.githubusercontent.com/jetkai/proxy-list/main/online-proxies/txt/proxies-socks4.txt",
+      "parser": "plaintext",
+      "type": "socks4"
+    },
+    {
+      "name": "JetkaiSOCKS5",
+      "url": "https://raw.githubusercontent.com/jetkai/proxy-list/main/online-proxies/txt/proxies-socks5.txt",
+      "parser": "plaintext",
+      "type": "socks5"
     }
   ],
   "test": {
     "url": "http://httpbin.org/ip",
     "timeout": 5.0,
     "max_workers": 50,
-    "recheck_interval_minutes": 30
+    "recheck_interval_minutes": 5,
+    "scrape_interval_minutes": 10,
+    "scrape_candidate_limit": 3000,
+    "scrape_on_startup": true,
+    "store_only_alive": true,
+    "delete_dead_after_check": true
   },
   "filters": {
     "type": [],

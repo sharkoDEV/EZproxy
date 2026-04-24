@@ -26,12 +26,20 @@ def parse_sslproxies(html: str) -> list[Proxy]:
         if len(cells) < 2:
             continue
         try:
+            protocol_cell = cells[4].lower() if len(cells) > 4 else ""
+            if protocol_cell in {"socks4", "socks5"}:
+                proxy_type = protocol_cell
+                anonymity = cells[5].lower() if len(cells) > 5 else None
+            else:
+                proxy_type = normalize_proxy_type(cells[6] if len(cells) > 6 else "http")
+                anonymity = cells[4].lower() if len(cells) > 4 else None
+
             proxy = Proxy(
                 ip=cells[0],
                 port=int(cells[1]),
                 country=cells[2] if len(cells) > 2 else None,
-                anonymity=cells[4].lower() if len(cells) > 4 else None,
-                type=normalize_proxy_type(cells[6] if len(cells) > 6 else "http"),
+                anonymity=anonymity,
+                type=proxy_type,
             )
             proxies.append(proxy)
         except ValueError:
@@ -50,12 +58,12 @@ def parse_spysone(html: str) -> list[Proxy]:
     return proxies or extract_proxies_with_regex(html)
 
 
-def parse_plaintext(body: str, proxy_type: str = "http") -> list[Proxy]:
-    return extract_proxies_with_regex(body, proxy_type=proxy_type)
+def parse_plaintext(body: str, proxy_type: str = "http", limit: int | None = None) -> list[Proxy]:
+    return extract_proxies_with_regex(body, proxy_type=proxy_type, limit=limit)
 
 
-def parse_proxydownload(body: str, proxy_type: str = "http") -> list[Proxy]:
-    return parse_plaintext(body, proxy_type=proxy_type)
+def parse_proxydownload(body: str, proxy_type: str = "http", limit: int | None = None) -> list[Proxy]:
+    return parse_plaintext(body, proxy_type=proxy_type, limit=limit)
 
 
 def parse_geonode(body: str) -> list[Proxy]:
@@ -104,9 +112,11 @@ async def fetch_source(session: aiohttp.ClientSession, source: ProxySource) -> l
 
     parser = PARSERS[source.parser]
     if source.parser in {"plaintext", "proxydownload"}:
-        parsed = parser(body, source.type)
+        parsed = parser(body, source.type, source.limit)
     else:
         parsed = parser(body)
+    if source.limit is not None:
+        parsed = parsed[: source.limit]
     logger.info("Scraped %s proxies from %s", len(parsed), source.name)
     return parsed
 

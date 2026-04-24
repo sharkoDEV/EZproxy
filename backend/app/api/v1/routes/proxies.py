@@ -7,7 +7,7 @@ from sqlmodel import Session, col, select
 from backend.app.api.v1.deps import get_session
 from backend.app.models.proxy import Proxy
 from backend.app.schemas.proxy import BatchTestRequest, ProxyCreate, ProxyList, ProxyRead, ProxyUpdate
-from backend.app.services.scraper import scrape_all_sources
+from backend.app.services.pipeline import scrape_test_and_store_alive
 from backend.app.services.tester import test_proxy, test_proxy_batch
 
 router = APIRouter(prefix="/proxies", tags=["proxies"])
@@ -42,8 +42,12 @@ def list_proxies(
 
 
 @router.post("", response_model=ProxyRead, status_code=status.HTTP_201_CREATED)
-def create_proxy(payload: ProxyCreate, session: Session = Depends(get_session)) -> Proxy:
+async def create_proxy(payload: ProxyCreate, session: Session = Depends(get_session)) -> Proxy:
     proxy = Proxy.model_validate(payload)
+    tested = await test_proxy(proxy)
+    if tested.status != "alive":
+        raise HTTPException(status_code=422, detail="Proxy is not alive, not stored")
+
     session.add(proxy)
     try:
         session.commit()
@@ -83,6 +87,10 @@ async def test_one_proxy(proxy_id: int, session: Session = Depends(get_session))
     if not proxy:
         raise HTTPException(status_code=404, detail="Proxy not found")
     tested = await test_proxy(proxy)
+    if tested.status == "dead":
+        session.delete(tested)
+        session.commit()
+        return tested
     session.add(tested)
     session.commit()
     session.refresh(tested)
@@ -97,18 +105,7 @@ async def test_batch(payload: BatchTestRequest, session: Session = Depends(get_s
 
 @router.post("/scrape", response_model=list[ProxyRead])
 async def scrape_sources(session: Session = Depends(get_session)) -> list[Proxy]:
-    scraped = await scrape_all_sources()
-    created: list[Proxy] = []
-    for proxy in scraped:
-        existing = session.exec(select(Proxy).where(Proxy.ip == proxy.ip, Proxy.port == proxy.port)).first()
-        if existing:
-            continue
-        session.add(proxy)
-        created.append(proxy)
-    session.commit()
-    for proxy in created:
-        session.refresh(proxy)
-    return created
+    return await scrape_test_and_store_alive(session)
 
 
 @router.get("/export", response_model=None)
