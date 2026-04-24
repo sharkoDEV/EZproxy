@@ -15,7 +15,8 @@ CONFIG_PATH = PROJECT_ROOT / "config.json"
 class ProxySource(BaseModel):
     name: str
     url: str
-    parser: Literal["sslproxies", "spysone", "proxydownload"]
+    parser: Literal["sslproxies", "spysone", "proxydownload", "plaintext", "geonode"]
+    type: str = "http"
 
 
 class TestSettings(BaseModel):
@@ -56,4 +57,3 @@ def _load_config_file() -> AppConfig:
 @lru_cache
 def get_settings() -> Settings:
     return Settings(config=_load_config_file())
-

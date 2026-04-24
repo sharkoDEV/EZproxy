@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import logging
+from typing import Any
 
 import aiohttp
 from bs4 import BeautifulSoup
@@ -48,14 +50,46 @@ def parse_spysone(html: str) -> list[Proxy]:
     return proxies or extract_proxies_with_regex(html)
 
 
-def parse_proxydownload(body: str) -> list[Proxy]:
-    return extract_proxies_with_regex(body, proxy_type="http")
+def parse_plaintext(body: str, proxy_type: str = "http") -> list[Proxy]:
+    return extract_proxies_with_regex(body, proxy_type=proxy_type)
+
+
+def parse_proxydownload(body: str, proxy_type: str = "http") -> list[Proxy]:
+    return parse_plaintext(body, proxy_type=proxy_type)
+
+
+def parse_geonode(body: str) -> list[Proxy]:
+    try:
+        payload: dict[str, Any] = json.loads(body)
+    except ValueError:
+        return extract_proxies_with_regex(body)
+
+    proxies: list[Proxy] = []
+    for item in payload.get("data", []):
+        protocols = item.get("protocols") or ["http"]
+        protocol = protocols[0] if isinstance(protocols, list) and protocols else "http"
+        try:
+            proxies.append(
+                Proxy(
+                    ip=item["ip"],
+                    port=int(item["port"]),
+                    type=normalize_proxy_type(protocol),
+                    country=item.get("country"),
+                    anonymity=item.get("anonymityLevel") or item.get("anonymity"),
+                    latency_ms=float(item["latency"]) if item.get("latency") is not None else None,
+                )
+            )
+        except (KeyError, TypeError, ValueError):
+            continue
+    return proxies or extract_proxies_with_regex(body)
 
 
 PARSERS = {
     "sslproxies": parse_sslproxies,
     "spysone": parse_spysone,
     "proxydownload": parse_proxydownload,
+    "plaintext": parse_plaintext,
+    "geonode": parse_geonode,
 }
 
 
@@ -69,7 +103,10 @@ async def fetch_source(session: aiohttp.ClientSession, source: ProxySource) -> l
         return []
 
     parser = PARSERS[source.parser]
-    parsed = parser(body)
+    if source.parser in {"plaintext", "proxydownload"}:
+        parsed = parser(body, source.type)
+    else:
+        parsed = parser(body)
     logger.info("Scraped %s proxies from %s", len(parsed), source.name)
     return parsed
 
@@ -82,4 +119,3 @@ async def scrape_all_sources() -> list[Proxy]:
 
     proxies = [proxy for group in results for proxy in group]
     return dedupe_proxies(proxies)
-
