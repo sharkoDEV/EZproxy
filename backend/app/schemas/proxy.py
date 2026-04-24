@@ -40,6 +40,19 @@ class ProxyList(BaseModel):
     page_size: int
 
 
+class ProxyStats(BaseModel):
+    total: int
+    alive: int
+    dead: int
+    unknown: int
+    avg_latency_ms: float | None = None
+
+
+class ProxyIds(BaseModel):
+    ids: list[int]
+    total: int
+
+
 class BatchTestRequest(BaseModel):
     ids: list[int]
 

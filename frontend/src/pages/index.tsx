@@ -1,21 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { CardStat } from "@/components/CardStat";
-import { fetchProxies } from "@/lib/api";
+import { fetchProxyStats } from "@/lib/api";
 import { formatLatency } from "@/utils/helpers";
 
 export default function Dashboard() {
   const { data, isLoading } = useQuery({
-    queryKey: ["proxies", "dashboard"],
-    queryFn: () => fetchProxies({ page_size: 500 }),
+    queryKey: ["proxies", "stats"],
+    queryFn: fetchProxyStats,
   });
-  const proxies = data?.items ?? [];
-  const alive = proxies.filter((proxy) => proxy.status === "alive");
-  const dead = proxies.filter((proxy) => proxy.status === "dead");
-  const avgLatency =
-    alive.length > 0
-      ? alive.reduce((sum, proxy) => sum + (proxy.latency_ms ?? 0), 0) /
-        alive.length
-      : undefined;
 
   return (
     <section className="h-full overflow-auto">
@@ -40,25 +32,24 @@ export default function Dashboard() {
         <CardStat
           hint="Reachable during last test"
           label="Actifs"
-          value={alive.length}
+          value={data?.alive ?? 0}
         />
         <CardStat
           hint="Across alive proxies"
           label="Latence moyenne"
-          value={formatLatency(avgLatency)}
+          value={formatLatency(data?.avg_latency_ms)}
         />
         <CardStat
-          hint="Dead or timed out"
-          label="Dernières erreurs"
-          value={dead.length}
+          hint={`${data?.unknown ?? 0} still waiting for validation`}
+          label="Dead / unknown"
+          value={`${data?.dead ?? 0} / ${data?.unknown ?? 0}`}
         />
       </div>
       <div className="mt-6 rounded-xl border border-line bg-panel p-6 shadow-glow">
         <h3 className="text-xl font-bold text-white">Mission loop</h3>
         <p className="mt-2 text-zinc-400">
-          The backend re-check worker wakes up on the configured interval and
-          retests stale proxies. The table page listens to Socket.IO for
-          progress and status events.
+          Scraped logs show raw candidates. Dashboard stats show what is
+          actually stored in the database, split by validation status.
         </p>
       </div>
     </section>

@@ -19,6 +19,14 @@ export type ProxyListResponse = {
   page_size: number;
 };
 
+export type ProxyStats = {
+  total: number;
+  alive: number;
+  dead: number;
+  unknown: number;
+  avg_latency_ms?: number | null;
+};
+
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1",
   timeout: 15000,
@@ -38,6 +46,21 @@ export async function fetchProxies(
   params?: Record<string, string | number | boolean | undefined>,
 ) {
   const { data } = await api.get<ProxyListResponse>("/proxies", { params });
+  return data;
+}
+
+export async function fetchProxyStats() {
+  const { data } = await api.get<ProxyStats>("/proxies/stats");
+  return data;
+}
+
+export async function fetchProxyIds(
+  params?: Record<string, string | number | boolean | undefined>,
+) {
+  const { data } = await api.get<{ ids: number[]; total: number }>(
+    "/proxies/ids",
+    { params },
+  );
   return data;
 }
 

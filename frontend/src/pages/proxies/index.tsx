@@ -9,7 +9,7 @@ import { FilterBar } from "@/components/FilterBar";
 import { Modal } from "@/components/Modal";
 import { ProgressBar } from "@/components/ProgressBar";
 import { ProxyTable } from "@/components/ProxyTable";
-import { api, fetchProxies } from "@/lib/api";
+import { api, fetchProxies, fetchProxyIds } from "@/lib/api";
 import { useAppStore } from "@/lib/store";
 
 const proxySchema = z.object({
@@ -91,7 +91,10 @@ export default function ProxiesPage() {
     onError: () => showToast("Test failed", "error"),
   });
   const batchMutation = useMutation({
-    mutationFn: (ids: number[]) => api.post("/proxies/test-batch", { ids }),
+    mutationFn: async () => {
+      const { ids } = await fetchProxyIds(params);
+      return api.post("/proxies/test-batch", { ids });
+    },
     onSuccess: () => {
       showToast("Batch test complete");
       invalidate();
@@ -120,12 +123,10 @@ export default function ProxiesPage() {
         </div>
         <div className="flex gap-2">
           <Button
-            disabled={proxies.length === 0 || batchMutation.isPending}
-            onClick={() =>
-              batchMutation.mutate(proxies.map((proxy) => proxy.id))
-            }
+            disabled={(data?.total ?? 0) === 0 || batchMutation.isPending}
+            onClick={() => batchMutation.mutate()}
           >
-            Test all
+            Test all {data?.total ? `(${data.total})` : ""}
           </Button>
           <Button variant="secondary" onClick={() => setOpen(true)}>
             Add proxy
