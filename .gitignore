@@ -7,6 +7,7 @@ venv/
 env/
 logs/
 *.db
+*.db-journal
 .env
 node_modules/
 .next/

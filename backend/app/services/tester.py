@@ -6,6 +6,7 @@ import time
 from datetime import UTC, datetime, timedelta
 
 import aiohttp
+from aiohttp_socks import ProxyConnector
 from sqlmodel import Session, select
 
 from backend.app.api.websocket import emit_progress, emit_proxy_status
@@ -20,16 +21,12 @@ def _proxy_url(proxy: Proxy) -> str:
     return f"{scheme}://{proxy.ip}:{proxy.port}"
 
 
-async def test_proxy(proxy: Proxy, timeout: float | None = None) -> Proxy:
-    settings = get_settings()
-    timeout_value = timeout or settings.config.test.timeout
-    start = time.perf_counter()
-    proxy_url = _proxy_url(proxy)
-
-    try:
-        client_timeout = aiohttp.ClientTimeout(total=timeout_value)
-        async with aiohttp.ClientSession(timeout=client_timeout) as session:
-            async with session.get(settings.config.test.url, proxy=proxy_url) as response:
+async def _fetch_test_url(test_url: str, proxy: Proxy, proxy_url: str, timeout_value: float) -> None:
+    client_timeout = aiohttp.ClientTimeout(total=timeout_value)
+    if proxy.type in {"socks4", "socks5"}:
+        connector = ProxyConnector.from_url(proxy_url)
+        async with aiohttp.ClientSession(timeout=client_timeout, connector=connector) as session:
+            async with session.get(test_url) as response:
                 if response.status >= 400:
                     raise aiohttp.ClientResponseError(
                         request_info=response.request_info,
@@ -38,10 +35,44 @@ async def test_proxy(proxy: Proxy, timeout: float | None = None) -> Proxy:
                         message="Proxy returned an error",
                     )
                 await response.text()
-        proxy.status = "alive"
-        proxy.latency_ms = round((time.perf_counter() - start) * 1000, 2)
-    except Exception as exc:  # noqa: BLE001
-        logger.info("Proxy %s:%s failed: %s", proxy.ip, proxy.port, exc)
+        return
+
+    async with aiohttp.ClientSession(timeout=client_timeout) as session:
+        async with session.get(test_url, proxy=proxy_url) as response:
+            if response.status >= 400:
+                raise aiohttp.ClientResponseError(
+                    request_info=response.request_info,
+                    history=response.history,
+                    status=response.status,
+                    message="Proxy returned an error",
+                )
+            await response.text()
+
+
+def _test_urls() -> list[str]:
+    settings = get_settings()
+    urls = [settings.config.test.url, *settings.config.test.urls]
+    return list(dict.fromkeys(urls))
+
+
+async def test_proxy(proxy: Proxy, timeout: float | None = None) -> Proxy:
+    settings = get_settings()
+    timeout_value = timeout or settings.config.test.timeout
+    start = time.perf_counter()
+    proxy_url = _proxy_url(proxy)
+
+    last_error: Exception | None = None
+    for test_url in _test_urls():
+        try:
+            await _fetch_test_url(test_url, proxy, proxy_url, timeout_value)
+            proxy.status = "alive"
+            proxy.latency_ms = round((time.perf_counter() - start) * 1000, 2)
+            break
+        except Exception as exc:  # noqa: BLE001
+            last_error = exc
+    else:
+        exc = last_error or RuntimeError("Proxy test failed")
+        logger.info("Proxy %s:%s failed: %r", proxy.ip, proxy.port, exc)
         proxy.status = "dead"
         proxy.latency_ms = None
 

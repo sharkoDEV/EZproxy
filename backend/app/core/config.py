@@ -22,6 +22,13 @@ class ProxySource(BaseModel):
 
 class TestSettings(BaseModel):
     url: str = "http://httpbin.org/ip"
+    urls: list[str] = Field(
+        default_factory=lambda: [
+            "http://httpbin.org/ip",
+            "https://httpbin.org/ip",
+            "https://api.ipify.org?format=json",
+        ]
+    )
     timeout: float = 5.0
     max_workers: int = 50
     recheck_interval_minutes: int = 5
