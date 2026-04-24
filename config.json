@@ -1,0 +1,41 @@
+{
+  "sources": [
+    {
+      "name": "SSLProxies",
+      "url": "https://www.sslproxies.org/",
+      "parser": "sslproxies"
+    },
+    {
+      "name": "FreeProxyList",
+      "url": "https://free-proxy-list.net/",
+      "parser": "sslproxies"
+    },
+    {
+      "name": "USProxy",
+      "url": "https://us-proxy.org/",
+      "parser": "sslproxies"
+    },
+    {
+      "name": "SpysOne",
+      "url": "https://spys.one/en/free-proxy-list/",
+      "parser": "spysone"
+    },
+    {
+      "name": "ProxyDownload",
+      "url": "https://proxy-list.download/api/v1/get?type=http",
+      "parser": "proxydownload"
+    }
+  ],
+  "test": {
+    "url": "http://httpbin.org/ip",
+    "timeout": 5.0,
+    "max_workers": 50,
+    "recheck_interval_minutes": 30
+  },
+  "filters": {
+    "type": [],
+    "country": [],
+    "anonymity": [],
+    "max_latency_ms": null
+  }
+}
