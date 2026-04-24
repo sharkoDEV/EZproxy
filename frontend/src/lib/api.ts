@@ -24,6 +24,11 @@ export type ProxyStats = {
   alive: number;
   dead: number;
   unknown: number;
+  to_test: number;
+  cycle_tested: number;
+  cycle_valid: number;
+  cycle_active: boolean;
+  phase: string;
   avg_latency_ms?: number | null;
 };
 
@@ -51,16 +56,6 @@ export async function fetchProxies(
 
 export async function fetchProxyStats() {
   const { data } = await api.get<ProxyStats>("/proxies/stats");
-  return data;
-}
-
-export async function fetchProxyIds(
-  params?: Record<string, string | number | boolean | undefined>,
-) {
-  const { data } = await api.get<{ ids: number[]; total: number }>(
-    "/proxies/ids",
-    { params },
-  );
   return data;
 }
 

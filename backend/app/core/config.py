@@ -32,6 +32,8 @@ class TestSettings(BaseModel):
     max_workers: int = 50
     recheck_interval_minutes: int = 5
     scrape_interval_minutes: int = 10
+    stock_guard_interval_seconds: int = 60
+    min_valid_proxies: int = 1000
     scrape_on_startup: bool = True
     store_only_alive: bool = True
     delete_dead_after_check: bool = True

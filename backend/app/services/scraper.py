@@ -7,8 +7,10 @@ from typing import Any
 import aiohttp
 from bs4 import BeautifulSoup
 
+from backend.app.api.websocket import emit_stats
 from backend.app.core.config import ProxySource, get_settings
 from backend.app.models.proxy import Proxy
+from backend.app.services.runtime import update_runtime_stats
 from backend.app.services.utils import dedupe_proxies, extract_proxies_with_regex, normalize_proxy_type
 
 logger = logging.getLogger(__name__)
@@ -115,6 +117,8 @@ async def fetch_source(session: aiohttp.ClientSession, source: ProxySource) -> l
         parsed = parser(body, source.type)
     else:
         parsed = parser(body)
+    update_runtime_stats(source=source.name, scraped=len(parsed))
+    await emit_stats()
     logger.info("Scraped %s proxies from %s", len(parsed), source.name)
     return parsed
 

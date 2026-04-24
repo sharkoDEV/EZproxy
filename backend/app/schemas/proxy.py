@@ -34,16 +34,12 @@ class ProxyStats(BaseModel):
     alive: int
     dead: int
     unknown: int
+    to_test: int = 0
+    cycle_tested: int = 0
+    cycle_valid: int = 0
+    cycle_active: bool = False
+    phase: str = "idle"
     avg_latency_ms: float | None = None
-
-
-class ProxyIds(BaseModel):
-    ids: list[int]
-    total: int
-
-
-class BatchTestRequest(BaseModel):
-    ids: list[int]
 
 
 class ProgressEvent(BaseModel):

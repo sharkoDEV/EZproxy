@@ -10,7 +10,7 @@ export function ProgressBar({ tested, total, valid }: ProgressBarProps) {
   return (
     <div className="rounded-lg border border-line bg-panel p-4">
       <div className="mb-2 flex items-center justify-between text-sm text-zinc-300">
-        <span>Batch testing</span>
+        <span>Automatic validation</span>
         <span>
           {tested}/{total} tested, {valid} valid
         </span>

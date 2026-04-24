@@ -1,13 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { CardStat } from "@/components/CardStat";
 import { fetchProxyStats } from "@/lib/api";
+import { useAppStore } from "@/lib/store";
 import { formatLatency } from "@/utils/helpers";
 
 export default function Dashboard() {
+  const runtimeStats = useAppStore((state) => state.runtimeStats);
   const { data, isLoading } = useQuery({
     queryKey: ["proxies", "stats"],
     queryFn: fetchProxyStats,
   });
+  const validStock = runtimeStats?.valid_stock ?? data?.alive ?? 0;
+  const toTest = runtimeStats
+    ? Math.max(runtimeStats.queued - runtimeStats.tested, 0)
+    : (data?.to_test ?? 0);
+  const phase = runtimeStats?.phase ?? data?.phase ?? "idle";
 
   return (
     <section className="h-full overflow-auto">
@@ -32,7 +39,12 @@ export default function Dashboard() {
         <CardStat
           hint="Reachable during last test"
           label="Actifs"
-          value={data?.alive ?? 0}
+          value={validStock}
+        />
+        <CardStat
+          hint={`Cycle phase: ${phase}`}
+          label="A tester"
+          value={toTest}
         />
         <CardStat
           hint="Across alive proxies"

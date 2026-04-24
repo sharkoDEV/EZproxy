@@ -221,6 +221,54 @@
       "url": "https://raw.githubusercontent.com/jetkai/proxy-list/main/online-proxies/txt/proxies-socks5.txt",
       "parser": "plaintext",
       "type": "socks5"
+    },
+    {
+      "name": "ProxyScraperHTTP",
+      "url": "https://raw.githubusercontent.com/ProxyScraper/ProxyScraper/main/http.txt",
+      "parser": "plaintext",
+      "type": "http"
+    },
+    {
+      "name": "ProxyScraperSOCKS4",
+      "url": "https://raw.githubusercontent.com/ProxyScraper/ProxyScraper/main/socks4.txt",
+      "parser": "plaintext",
+      "type": "socks4"
+    },
+    {
+      "name": "ProxyScraperSOCKS5",
+      "url": "https://raw.githubusercontent.com/ProxyScraper/ProxyScraper/main/socks5.txt",
+      "parser": "plaintext",
+      "type": "socks5"
+    },
+    {
+      "name": "IPLocateHTTP",
+      "url": "https://raw.githubusercontent.com/iplocate/free-proxy-list/main/protocols/http.txt",
+      "parser": "plaintext",
+      "type": "http"
+    },
+    {
+      "name": "IPLocateHTTPS",
+      "url": "https://raw.githubusercontent.com/iplocate/free-proxy-list/main/protocols/https.txt",
+      "parser": "plaintext",
+      "type": "https"
+    },
+    {
+      "name": "IPLocateSOCKS4",
+      "url": "https://raw.githubusercontent.com/iplocate/free-proxy-list/main/protocols/socks4.txt",
+      "parser": "plaintext",
+      "type": "socks4"
+    },
+    {
+      "name": "IPLocateSOCKS5",
+      "url": "https://raw.githubusercontent.com/iplocate/free-proxy-list/main/protocols/socks5.txt",
+      "parser": "plaintext",
+      "type": "socks5"
+    },
+    {
+      "name": "Proxy4ParsingHTTP",
+      "url": "https://raw.githubusercontent.com/proxy4parsing/proxy-list/main/http.txt",
+      "parser": "plaintext",
+      "type": "http"
     }
   ],
   "test": {
@@ -230,13 +278,15 @@
       "https://httpbin.org/ip",
       "https://api.ipify.org?format=json"
     ],
-    "timeout": 800.0,
+    "timeout": 12.0,
     "max_workers": 50,
     "recheck_interval_minutes": 5,
     "scrape_interval_minutes": 10,
     "scrape_on_startup": true,
     "store_only_alive": true,
-    "delete_dead_after_check": true
+    "delete_dead_after_check": true,
+    "stock_guard_interval_seconds": 60,
+    "min_valid_proxies": 1000
   },
   "filters": {
     "type": [],

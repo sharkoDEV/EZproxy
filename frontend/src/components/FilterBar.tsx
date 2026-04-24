@@ -8,16 +8,10 @@ type FilterBarProps = {
     anonymity: string;
   };
   onChange: (values: FilterBarProps["values"]) => void;
-  onScrape: () => void;
   onExport: (format: "txt" | "csv") => void;
 };
 
-export function FilterBar({
-  values,
-  onChange,
-  onScrape,
-  onExport,
-}: FilterBarProps) {
+export function FilterBar({ values, onChange, onExport }: FilterBarProps) {
   const field =
     "rounded-md border border-line bg-panel px-3 py-2 text-sm text-ink transition focus:border-neon";
 
@@ -66,9 +60,6 @@ export function FilterBar({
           }
         />
         <div className="flex gap-2">
-          <Button className="flex-1" onClick={onScrape}>
-            Scrape
-          </Button>
           <Button variant="secondary" onClick={() => onExport("txt")}>
             TXT
           </Button>

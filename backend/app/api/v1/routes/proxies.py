@@ -7,14 +7,11 @@ from sqlmodel import Session, col, select
 from backend.app.api.v1.deps import get_session
 from backend.app.models.proxy import Proxy
 from backend.app.schemas.proxy import (
-    BatchTestRequest,
-    ProxyIds,
     ProxyList,
     ProxyRead,
     ProxyStats,
 )
-from backend.app.services.pipeline import scrape_test_and_store_alive
-from backend.app.services.tester import test_proxy_batch
+from backend.app.services.runtime import runtime_stats
 
 router = APIRouter(prefix="/proxies", tags=["proxies"])
 
@@ -64,32 +61,18 @@ def proxy_stats(session: Session = Depends(get_session)) -> ProxyStats:
     dead = session.exec(select(func.count()).select_from(Proxy).where(Proxy.status == "dead")).one()
     unknown = session.exec(select(func.count()).select_from(Proxy).where(Proxy.status == "unknown")).one()
     avg_latency = session.exec(select(func.avg(Proxy.latency_ms)).where(Proxy.status == "alive")).one()
-    return ProxyStats(total=total, alive=alive, dead=dead, unknown=unknown, avg_latency_ms=avg_latency)
-
-
-@router.get("/ids", response_model=ProxyIds)
-def list_proxy_ids(
-    session: Session = Depends(get_session),
-    type: str | None = None,  # noqa: A002
-    country: str | None = None,
-    anonymity: str | None = None,
-    max_latency: float | None = None,
-    search: str | None = None,
-) -> ProxyIds:
-    statement = filtered_proxy_statement(type, country, anonymity, max_latency, search)
-    ids = [proxy.id for proxy in session.exec(statement).all() if proxy.id is not None]
-    return ProxyIds(ids=ids, total=len(ids))
-
-
-@router.post("/test-batch", response_model=list[ProxyRead])
-async def test_batch(payload: BatchTestRequest, session: Session = Depends(get_session)) -> list[Proxy]:
-    proxies = list(session.exec(select(Proxy).where(Proxy.id.in_(payload.ids))).all())  # type: ignore[attr-defined]
-    return await test_proxy_batch(session, proxies)
-
-
-@router.post("/scrape", response_model=list[ProxyRead])
-async def scrape_sources(session: Session = Depends(get_session)) -> list[Proxy]:
-    return await scrape_test_and_store_alive(session)
+    return ProxyStats(
+        total=total,
+        alive=alive,
+        dead=dead,
+        unknown=unknown,
+        to_test=max(runtime_stats.queued - runtime_stats.tested, 0),
+        cycle_tested=runtime_stats.tested,
+        cycle_valid=runtime_stats.valid,
+        cycle_active=runtime_stats.cycle_active,
+        phase=runtime_stats.phase,
+        avg_latency_ms=avg_latency,
+    )
 
 
 @router.get("/export", response_model=None)

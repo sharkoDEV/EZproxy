@@ -5,7 +5,9 @@ import logging
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
+from backend.app.api.websocket import emit_stats
 from backend.app.models.proxy import Proxy
+from backend.app.services.runtime import finish_cycle, start_cycle, update_runtime_stats
 from backend.app.services.scraper import scrape_all_sources
 from backend.app.services.tester import test_proxy_candidates
 
@@ -13,6 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 async def scrape_test_and_store_alive(session: Session) -> list[Proxy]:
+    start_cycle("scraping")
+    await emit_stats()
     scraped = await scrape_all_sources()
     candidates: list[Proxy] = []
 
@@ -22,8 +26,13 @@ async def scrape_test_and_store_alive(session: Session) -> list[Proxy]:
             candidates.append(proxy)
 
     if not candidates:
+        update_stock_stats(session)
+        finish_cycle()
+        await emit_stats()
         return []
 
+    update_runtime_stats(phase="testing", scraped=len(scraped), queued=len(candidates), tested=0, valid=0)
+    await emit_stats()
     logger.info("Testing %s scraped candidates before storing", len(candidates))
     tested = await test_proxy_candidates(candidates)
     from backend.app.core.config import get_settings
@@ -42,5 +51,17 @@ async def scrape_test_and_store_alive(session: Session) -> list[Proxy]:
         session.refresh(proxy)
         stored.append(proxy)
 
+    update_stock_stats(session)
+    update_runtime_stats(stored=len(stored), tested=len(tested), valid=len(alive))
+    finish_cycle()
+    await emit_stats()
     logger.info("Stored %s alive proxies from %s tested candidates", len(stored), len(tested))
     return stored
+
+
+def update_stock_stats(session: Session) -> None:
+    proxies = session.exec(select(Proxy.status)).all()
+    update_runtime_stats(
+        total_stock=len(proxies),
+        valid_stock=sum(1 for status in proxies if status == "alive"),
+    )

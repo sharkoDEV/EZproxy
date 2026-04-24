@@ -9,9 +9,10 @@ import aiohttp
 from aiohttp_socks import ProxyConnector
 from sqlmodel import Session, select
 
-from backend.app.api.websocket import emit_progress, emit_proxy_status
+from backend.app.api.websocket import emit_progress, emit_proxy_status, emit_stats
 from backend.app.core.config import get_settings
 from backend.app.models.proxy import Proxy
+from backend.app.services.runtime import update_runtime_stats
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +105,9 @@ async def test_proxy_batch(session: Session, proxies: list[Proxy]) -> list[Proxy
             session.add(proxy)
             session.commit()
             session.refresh(proxy)
+        update_runtime_stats(phase="rechecking", queued=total, tested=tested, valid=valid)
         await emit_progress(tested, total, valid)
+        await emit_stats()
         results.append(proxy)
     return results
 
@@ -125,7 +128,9 @@ async def test_proxy_candidates(proxies: list[Proxy]) -> list[Proxy]:
         proxy = await task
         tested += 1
         valid += 1 if proxy.status == "alive" else 0
+        update_runtime_stats(phase="testing", queued=total, tested=tested, valid=valid)
         await emit_progress(tested, total, valid)
+        await emit_stats()
         results.append(proxy)
     return results
 

@@ -1,16 +1,15 @@
 import { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/Button";
+import { useQuery } from "@tanstack/react-query";
 import { FilterBar } from "@/components/FilterBar";
+import { CardStat } from "@/components/CardStat";
 import { ProgressBar } from "@/components/ProgressBar";
 import { ProxyTable } from "@/components/ProxyTable";
-import { api, fetchProxies, fetchProxyIds } from "@/lib/api";
+import { fetchProxies } from "@/lib/api";
 import { useAppStore } from "@/lib/store";
 
 export default function ProxiesPage() {
-  const queryClient = useQueryClient();
-  const showToast = useAppStore((state) => state.showToast);
   const progress = useAppStore((state) => state.progress);
+  const runtimeStats = useAppStore((state) => state.runtimeStats);
   const [filters, setFilters] = useState({
     search: "",
     type: "",
@@ -34,27 +33,6 @@ export default function ProxiesPage() {
     queryFn: () => fetchProxies(params),
   });
 
-  const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: ["proxies"] });
-  const scrapeMutation = useMutation({
-    mutationFn: () => api.post("/proxies/scrape"),
-    onSuccess: () => {
-      showToast("Sources scraped");
-      invalidate();
-    },
-    onError: () => showToast("Scrape failed", "error"),
-  });
-  const batchMutation = useMutation({
-    mutationFn: async () => {
-      const { ids } = await fetchProxyIds(params);
-      return api.post("/proxies/test-batch", { ids });
-    },
-    onSuccess: () => {
-      showToast("Batch test complete");
-      invalidate();
-    },
-  });
-
   function exportFile(format: "txt" | "csv") {
     window.open(
       `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1"}/proxies/export?format=${format}`,
@@ -63,6 +41,9 @@ export default function ProxiesPage() {
   }
 
   const proxies = data?.items ?? [];
+  const toTest = runtimeStats
+    ? Math.max(runtimeStats.queued - runtimeStats.tested, 0)
+    : 0;
 
   return (
     <section className="flex h-full flex-col gap-4 overflow-hidden">
@@ -75,26 +56,43 @@ export default function ProxiesPage() {
             Scrape, test, re-check, export.
           </h2>
         </div>
-        <div className="flex gap-2">
-          <Button
-            disabled={(data?.total ?? 0) === 0 || batchMutation.isPending}
-            onClick={() => batchMutation.mutate()}
-          >
-            Test all {data?.total ? `(${data.total})` : ""}
-          </Button>
+        <div className="rounded-lg border border-line bg-panel px-4 py-2 text-sm text-zinc-400">
+          Auto scrape + re-check is running in the backend.
         </div>
       </div>
       <FilterBar
         values={filters}
         onChange={setFilters}
         onExport={exportFile}
-        onScrape={() => scrapeMutation.mutate()}
       />
+      <div className="grid gap-3 md:grid-cols-4">
+        <CardStat
+          label="Valides live"
+          value={runtimeStats?.valid_stock ?? "sync"}
+          hint="Alive stored in database"
+        />
+        <CardStat
+          label="A tester"
+          value={toTest}
+          hint="Remaining in current automatic cycle"
+        />
+        <CardStat
+          label="Testes cycle"
+          value={runtimeStats?.tested ?? 0}
+          hint={`Valid this cycle: ${runtimeStats?.valid ?? 0}`}
+        />
+        <CardStat
+          label="Phase"
+          value={runtimeStats?.phase ?? "idle"}
+          hint={
+            runtimeStats?.source
+              ? `Source: ${runtimeStats.source}`
+              : "Automatic worker"
+          }
+        />
+      </div>
       {progress ? <ProgressBar {...progress} /> : null}
-      <ProxyTable
-        loading={isLoading}
-        proxies={proxies}
-      />
+      <ProxyTable loading={isLoading} proxies={proxies} />
     </section>
   );
 }
