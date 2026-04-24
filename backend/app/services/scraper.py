@@ -58,12 +58,12 @@ def parse_spysone(html: str) -> list[Proxy]:
     return proxies or extract_proxies_with_regex(html)
 
 
-def parse_plaintext(body: str, proxy_type: str = "http", limit: int | None = None) -> list[Proxy]:
-    return extract_proxies_with_regex(body, proxy_type=proxy_type, limit=limit)
+def parse_plaintext(body: str, proxy_type: str = "http") -> list[Proxy]:
+    return extract_proxies_with_regex(body, proxy_type=proxy_type)
 
 
-def parse_proxydownload(body: str, proxy_type: str = "http", limit: int | None = None) -> list[Proxy]:
-    return parse_plaintext(body, proxy_type=proxy_type, limit=limit)
+def parse_proxydownload(body: str, proxy_type: str = "http") -> list[Proxy]:
+    return parse_plaintext(body, proxy_type=proxy_type)
 
 
 def parse_geonode(body: str) -> list[Proxy]:
@@ -112,11 +112,9 @@ async def fetch_source(session: aiohttp.ClientSession, source: ProxySource) -> l
 
     parser = PARSERS[source.parser]
     if source.parser in {"plaintext", "proxydownload"}:
-        parsed = parser(body, source.type, source.limit)
+        parsed = parser(body, source.type)
     else:
         parsed = parser(body)
-    if source.limit is not None:
-        parsed = parsed[: source.limit]
     logger.info("Scraped %s proxies from %s", len(parsed), source.name)
     return parsed
 

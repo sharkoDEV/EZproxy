@@ -19,14 +19,12 @@ def normalize_proxy_type(value: str | None) -> str:
     return "http"
 
 
-def extract_proxies_with_regex(text: str, proxy_type: str = "http", limit: int | None = None) -> list[Proxy]:
+def extract_proxies_with_regex(text: str, proxy_type: str = "http") -> list[Proxy]:
     proxies: list[Proxy] = []
     for match in PROXY_RE.finditer(text):
         port = int(match.group("port"))
         if 1 <= port <= 65535:
             proxies.append(Proxy(ip=match.group("ip"), port=port, type=proxy_type))
-            if limit is not None and len(proxies) >= limit:
-                break
     return proxies
 
 
