@@ -1,22 +1,12 @@
 import type { ProxyRecord } from "@/lib/api";
 import { formatLatency, statusTone } from "@/utils/helpers";
-import { Button } from "./Button";
 
 type ProxyTableProps = {
   proxies: ProxyRecord[];
   loading?: boolean;
-  onDelete: (id: number) => void;
-  onTest: (id: number) => void;
-  onEdit: (id: number) => void;
 };
 
-export function ProxyTable({
-  proxies,
-  loading,
-  onDelete,
-  onEdit,
-  onTest,
-}: ProxyTableProps) {
+export function ProxyTable({ proxies, loading }: ProxyTableProps) {
   return (
     <div className="max-h-[calc(100vh-64px-16rem)] overflow-auto rounded-lg border border-line bg-panel">
       <table className="w-full table-auto border-collapse text-left text-sm">
@@ -30,7 +20,6 @@ export function ProxyTable({
               "Anonymat",
               "Latence",
               "Statut",
-              "Actions",
             ].map((header) => (
               <th className="border-b border-line px-4 py-3" key={header}>
                 {header}
@@ -41,15 +30,15 @@ export function ProxyTable({
         <tbody>
           {loading ? (
             <tr>
-              <td className="px-4 py-8 text-center text-zinc-400" colSpan={8}>
+              <td className="px-4 py-8 text-center text-zinc-400" colSpan={7}>
                 Loading proxies...
               </td>
             </tr>
           ) : null}
           {!loading && proxies.length === 0 ? (
             <tr>
-              <td className="px-4 py-8 text-center text-zinc-400" colSpan={8}>
-                No proxies yet. Scrape sources or add one manually.
+              <td className="px-4 py-8 text-center text-zinc-400" colSpan={7}>
+                No proxies yet. Scrape public sources to populate the table.
               </td>
             </tr>
           ) : null}
@@ -66,19 +55,6 @@ export function ProxyTable({
               <td className="px-4 py-3">{formatLatency(proxy.latency_ms)}</td>
               <td className={`px-4 py-3 font-bold ${statusTone(proxy.status)}`}>
                 {proxy.status}
-              </td>
-              <td className="px-4 py-3">
-                <div className="flex gap-2">
-                  <Button variant="secondary" onClick={() => onTest(proxy.id)}>
-                    Test
-                  </Button>
-                  <Button variant="ghost" onClick={() => onEdit(proxy.id)}>
-                    Edit
-                  </Button>
-                  <Button variant="ghost" onClick={() => onDelete(proxy.id)}>
-                    Delete
-                  </Button>
-                </div>
               </td>
             </tr>
           ))}

@@ -1,23 +1,20 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy import func
-from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, col, select
 
 from backend.app.api.v1.deps import get_session
 from backend.app.models.proxy import Proxy
 from backend.app.schemas.proxy import (
     BatchTestRequest,
-    ProxyCreate,
     ProxyIds,
     ProxyList,
     ProxyRead,
     ProxyStats,
-    ProxyUpdate,
 )
 from backend.app.services.pipeline import scrape_test_and_store_alive
-from backend.app.services.tester import test_proxy, test_proxy_batch
+from backend.app.services.tester import test_proxy_batch
 
 router = APIRouter(prefix="/proxies", tags=["proxies"])
 
@@ -84,62 +81,6 @@ def list_proxy_ids(
     return ProxyIds(ids=ids, total=len(ids))
 
 
-@router.post("", response_model=ProxyRead, status_code=status.HTTP_201_CREATED)
-async def create_proxy(payload: ProxyCreate, session: Session = Depends(get_session)) -> Proxy:
-    proxy = Proxy.model_validate(payload)
-    tested = await test_proxy(proxy)
-    if tested.status != "alive":
-        raise HTTPException(status_code=422, detail="Proxy is not alive, not stored")
-
-    session.add(proxy)
-    try:
-        session.commit()
-    except IntegrityError as exc:
-        session.rollback()
-        raise HTTPException(status_code=409, detail="Proxy already exists") from exc
-    session.refresh(proxy)
-    return proxy
-
-
-@router.patch("/{proxy_id}", response_model=ProxyRead)
-def update_proxy(proxy_id: int, payload: ProxyUpdate, session: Session = Depends(get_session)) -> Proxy:
-    proxy = session.get(Proxy, proxy_id)
-    if not proxy:
-        raise HTTPException(status_code=404, detail="Proxy not found")
-    for key, value in payload.model_dump(exclude_unset=True).items():
-        setattr(proxy, key, value)
-    session.add(proxy)
-    session.commit()
-    session.refresh(proxy)
-    return proxy
-
-
-@router.delete("/{proxy_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_proxy(proxy_id: int, session: Session = Depends(get_session)) -> Response:
-    proxy = session.get(Proxy, proxy_id)
-    if not proxy:
-        raise HTTPException(status_code=404, detail="Proxy not found")
-    session.delete(proxy)
-    session.commit()
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-@router.post("/{proxy_id}/test", response_model=ProxyRead)
-async def test_one_proxy(proxy_id: int, session: Session = Depends(get_session)) -> Proxy:
-    proxy = session.get(Proxy, proxy_id)
-    if not proxy:
-        raise HTTPException(status_code=404, detail="Proxy not found")
-    tested = await test_proxy(proxy)
-    if tested.status == "dead":
-        session.delete(tested)
-        session.commit()
-        return tested
-    session.add(tested)
-    session.commit()
-    session.refresh(tested)
-    return tested
-
-
 @router.post("/test-batch", response_model=list[ProxyRead])
 async def test_batch(payload: BatchTestRequest, session: Session = Depends(get_session)) -> list[Proxy]:
     proxies = list(session.exec(select(Proxy).where(Proxy.id.in_(payload.ids))).all())  # type: ignore[attr-defined]
@@ -149,15 +90,6 @@ async def test_batch(payload: BatchTestRequest, session: Session = Depends(get_s
 @router.post("/scrape", response_model=list[ProxyRead])
 async def scrape_sources(session: Session = Depends(get_session)) -> list[Proxy]:
     return await scrape_test_and_store_alive(session)
-
-
-@router.delete("/invalid", response_model=dict[str, int])
-def delete_invalid_proxies(session: Session = Depends(get_session)) -> dict[str, int]:
-    invalid = list(session.exec(select(Proxy).where(Proxy.status != "alive")).all())
-    for proxy in invalid:
-        session.delete(proxy)
-    session.commit()
-    return {"deleted": len(invalid)}
 
 
 @router.get("/export", response_model=None)
@@ -181,11 +113,3 @@ def export_proxies(
         )
         return Response("\n".join(rows), media_type="text/csv")
     return Response("\n".join(f"{p.ip}:{p.port}" for p in proxies), media_type="text/plain")
-
-
-@router.get("/{proxy_id}", response_model=ProxyRead)
-def get_proxy(proxy_id: int, session: Session = Depends(get_session)) -> Proxy:
-    proxy = session.get(Proxy, proxy_id)
-    if not proxy:
-        raise HTTPException(status_code=404, detail="Proxy not found")
-    return proxy

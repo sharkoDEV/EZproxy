@@ -13,17 +13,6 @@ class ProxyBase(BaseModel):
     anonymity: str | None = None
 
 
-class ProxyCreate(ProxyBase):
-    pass
-
-
-class ProxyUpdate(BaseModel):
-    type: str | None = None
-    country: str | None = None
-    anonymity: str | None = None
-    status: str | None = None
-
-
 class ProxyRead(ProxyBase):
     model_config = ConfigDict(from_attributes=True)
 
