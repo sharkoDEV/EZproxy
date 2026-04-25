@@ -5,7 +5,7 @@ import logging
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
-from backend.app.api.websocket import emit_stats
+from backend.app.api.websocket import emit_proxy_added, emit_stats
 from backend.app.models.proxy import Proxy
 from backend.app.services.runtime import finish_cycle, start_cycle, update_runtime_stats
 from backend.app.services.scraper import scrape_all_sources
@@ -50,6 +50,22 @@ async def scrape_test_and_store_alive(session: Session) -> list[Proxy]:
             continue
         session.refresh(proxy)
         stored.append(proxy)
+        await emit_proxy_added(
+            {
+                "id": proxy.id,
+                "ip": proxy.ip,
+                "port": proxy.port,
+                "type": proxy.type,
+                "country": proxy.country,
+                "anonymity": proxy.anonymity,
+                "latency_ms": proxy.latency_ms,
+                "last_checked": proxy.last_checked.isoformat() if proxy.last_checked else None,
+                "status": proxy.status,
+            }
+        )
+        update_stock_stats(session)
+        update_runtime_stats(stored=len(stored))
+        await emit_stats()
 
     update_stock_stats(session)
     update_runtime_stats(stored=len(stored), tested=len(tested), valid=len(alive))

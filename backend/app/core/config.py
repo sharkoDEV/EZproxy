@@ -29,7 +29,7 @@ class TestSettings(BaseModel):
         ]
     )
     timeout: float = 5.0
-    max_workers: int = 50
+    max_workers: int = 200
     recheck_interval_minutes: int = 5
     scrape_interval_minutes: int = 10
     stock_guard_interval_seconds: int = 60

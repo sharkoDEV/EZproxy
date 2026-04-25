@@ -26,6 +26,10 @@ async def emit_proxy_status(proxy_id: int | None, status: str, latency_ms: float
     )
 
 
+async def emit_proxy_added(proxy: dict) -> None:
+    await sio.emit("proxy_added", proxy, namespace="/ws/proxies")
+
+
 async def emit_progress(tested: int, total: int, valid: int) -> None:
     await sio.emit("progress", {"tested": tested, "total": total, "valid": valid}, namespace="/ws/proxies")
 

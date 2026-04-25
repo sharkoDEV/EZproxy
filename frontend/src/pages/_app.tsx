@@ -15,12 +15,16 @@ export default function App({ Component, pageProps }: AppProps) {
     socket.connect();
     socket.on("progress", setProgress);
     socket.on("stats", setRuntimeStats);
+    socket.on("proxy_added", () => {
+      queryClient.invalidateQueries({ queryKey: ["proxies"] });
+    });
     return () => {
       socket.off("progress", setProgress);
       socket.off("stats", setRuntimeStats);
+      socket.off("proxy_added");
       socket.disconnect();
     };
-  }, [setProgress, setRuntimeStats]);
+  }, [queryClient, setProgress, setRuntimeStats]);
 
   return (
     <QueryClientProvider client={queryClient}>

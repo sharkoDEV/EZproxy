@@ -279,7 +279,7 @@
       "https://api.ipify.org?format=json"
     ],
     "timeout": 12.0,
-    "max_workers": 50,
+    "max_workers": 200,
     "recheck_interval_minutes": 5,
     "scrape_interval_minutes": 10,
     "scrape_on_startup": true,
