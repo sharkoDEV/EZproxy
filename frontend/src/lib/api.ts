@@ -65,8 +65,11 @@ export type ProxyStats = {
   avg_latency_ms?: number | null;
 };
 
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1",
+  baseURL: API_BASE_URL,
   timeout: 120000,
 });
 
@@ -89,6 +92,14 @@ export async function fetchProxies(
 
 export async function fetchProxyStats() {
   const { data } = await api.get<ProxyStats>("/proxies/stats");
+  return data;
+}
+
+export async function fetchHealth() {
+  const { data } = await api.get<{ status: string; service: string }>(
+    "/health",
+    { timeout: 2500 },
+  );
   return data;
 }
 

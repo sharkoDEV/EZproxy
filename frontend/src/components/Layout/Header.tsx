@@ -4,6 +4,7 @@ import { Button } from "../Button";
 type HeaderProps = {
   collapsed: boolean;
   theme: "dark" | "light";
+  apiConnected: boolean;
   isAdmin: boolean;
   socketConnected: boolean;
   onToggleSidebar: () => void;
@@ -13,6 +14,7 @@ type HeaderProps = {
 };
 
 export function Header({
+  apiConnected,
   collapsed,
   isAdmin,
   onLogoutAdmin,
@@ -45,12 +47,12 @@ export function Header({
       <div className="flex items-center gap-3">
         <div
           className={`rounded-full border px-3 py-1 text-xs font-bold ${
-            socketConnected
+            apiConnected && socketConnected
               ? "border-neon text-neon"
               : "border-magenta text-magenta"
           }`}
         >
-          {socketConnected ? "LIVE" : "SYNC..."}
+          {apiConnected && socketConnected ? "LIVE" : "SYNC..."}
         </div>
         <Button
           aria-label="Toggle theme"

@@ -2,7 +2,7 @@ import type { AppProps } from "next/app";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Layout } from "@/components/Layout/Layout";
-import type { ProxyListResponse, ProxyRecord } from "@/lib/api";
+import { fetchHealth, type ProxyListResponse, type ProxyRecord } from "@/lib/api";
 import { socket } from "@/lib/socket";
 import { useAppStore } from "@/lib/store";
 import "@/styles/globals.css";
@@ -29,8 +29,34 @@ export default function App({ Component, pageProps }: AppProps) {
       }),
   );
   const setProgress = useAppStore((state) => state.setProgress);
+  const setApiStatus = useAppStore((state) => state.setApiStatus);
   const setRuntimeStats = useAppStore((state) => state.setRuntimeStats);
   const setSocketConnected = useAppStore((state) => state.setSocketConnected);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkHealth() {
+      try {
+        await fetchHealth();
+        if (!cancelled) {
+          setApiStatus(true);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          const message = error instanceof Error ? error.message : "API unreachable";
+          setApiStatus(false, message);
+        }
+      }
+    }
+
+    void checkHealth();
+    const interval = window.setInterval(checkHealth, 3000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [setApiStatus]);
 
   useEffect(() => {
     const refreshEverything = () => {

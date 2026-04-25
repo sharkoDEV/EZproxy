@@ -13,6 +13,7 @@ export function Layout({ children }: PropsWithChildren) {
   const collapsed = useAppStore((state) => state.collapsed);
   const theme = useAppStore((state) => state.theme);
   const adminToken = useAppStore((state) => state.adminToken);
+  const apiConnected = useAppStore((state) => state.apiConnected);
   const socketConnected = useAppStore((state) => state.socketConnected);
   const setCollapsed = useAppStore((state) => state.setCollapsed);
   const setAdminToken = useAppStore((state) => state.setAdminToken);
@@ -48,6 +49,7 @@ export function Layout({ children }: PropsWithChildren) {
   return (
     <div className="scanline min-h-screen bg-void text-ink">
       <Header
+        apiConnected={apiConnected}
         collapsed={collapsed}
         isAdmin={Boolean(adminToken)}
         socketConnected={socketConnected}

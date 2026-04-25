@@ -1,7 +1,10 @@
 import { io } from "socket.io-client";
 
+export const SOCKET_BASE_URL =
+  process.env.NEXT_PUBLIC_SOCKET_URL ?? "http://localhost:8000";
+
 export const socket = io(
-  `${process.env.NEXT_PUBLIC_SOCKET_URL ?? "http://localhost:8000"}/ws/proxies`,
+  `${SOCKET_BASE_URL}/ws/proxies`,
   {
     autoConnect: false,
     path: "/socket.io",
