@@ -91,6 +91,32 @@ export default function ProxiesPage() {
           }
         />
       </div>
+      <div className="grid gap-3 md:grid-cols-4">
+        <CardStat
+          label="GFP worker"
+          value={runtimeStats?.gfp_active ? "running" : "done"}
+          hint="Separate one-shot worker, 1 tester"
+        />
+        <CardStat
+          label="GFP a tester"
+          value={
+            runtimeStats
+              ? Math.max(runtimeStats.gfp_queued - runtimeStats.gfp_tested, 0)
+              : 0
+          }
+          hint={`Scraped: ${runtimeStats?.gfp_scraped ?? 0}`}
+        />
+        <CardStat
+          label="GFP testes"
+          value={runtimeStats?.gfp_tested ?? 0}
+          hint={`Valid: ${runtimeStats?.gfp_valid ?? 0}`}
+        />
+        <CardStat
+          label="GFP stockes"
+          value={runtimeStats?.gfp_stored ?? 0}
+          hint="Alive proxies added from GFP"
+        />
+      </div>
       {progress ? <ProgressBar {...progress} /> : null}
       <ProxyTable loading={isLoading} proxies={proxies} />
     </section>

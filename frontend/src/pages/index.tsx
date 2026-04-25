@@ -63,6 +63,11 @@ export default function Dashboard() {
           Scraped logs show raw candidates. Dashboard stats show what is
           actually stored in the database, split by validation status.
         </p>
+        <p className="mt-3 text-sm text-zinc-500">
+          GFP runs separately once at startup with a single tester:{" "}
+          {runtimeStats?.gfp_tested ?? 0}/{runtimeStats?.gfp_queued ?? 0}{" "}
+          checked, {runtimeStats?.gfp_valid ?? 0} valid.
+        </p>
       </div>
     </section>
   );

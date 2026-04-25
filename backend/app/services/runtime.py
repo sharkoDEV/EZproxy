@@ -18,6 +18,12 @@ class RuntimeStats:
     stored: int = 0
     valid_stock: int = 0
     total_stock: int = 0
+    gfp_active: bool = False
+    gfp_scraped: int = 0
+    gfp_queued: int = 0
+    gfp_tested: int = 0
+    gfp_valid: int = 0
+    gfp_stored: int = 0
     last_error: str | None = None
     updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
@@ -34,6 +40,12 @@ class RuntimeStats:
             "stored": self.stored,
             "valid_stock": self.valid_stock,
             "total_stock": self.total_stock,
+            "gfp_active": self.gfp_active,
+            "gfp_scraped": self.gfp_scraped,
+            "gfp_queued": self.gfp_queued,
+            "gfp_tested": self.gfp_tested,
+            "gfp_valid": self.gfp_valid,
+            "gfp_stored": self.gfp_stored,
             "last_error": self.last_error,
             "updated_at": self.updated_at,
         }

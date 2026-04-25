@@ -126,10 +126,22 @@ async def fetch_source(session: aiohttp.ClientSession, source: ProxySource) -> l
 
 async def scrape_all_sources() -> list[Proxy]:
     settings = get_settings()
+    sources = [source for source in settings.config.sources if not source.name.startswith("GFP")]
+    return await scrape_sources(sources)
+
+
+async def scrape_gfp_sources() -> list[Proxy]:
+    settings = get_settings()
+    sources = [source for source in settings.config.sources if source.name.startswith("GFP")]
+    return await scrape_sources(sources)
+
+
+async def scrape_sources(sources: list[ProxySource]) -> list[Proxy]:
+    settings = get_settings()
     timeout = aiohttp.ClientTimeout(total=settings.config.test.timeout)
     async with aiohttp.ClientSession(timeout=timeout, headers={"User-Agent": "ezProxy/1.0"}) as session:
         results = await asyncio.gather(
-            *(fetch_source(session, source) for source in settings.config.sources),
+            *(fetch_source(session, source) for source in sources),
             return_exceptions=True,
         )
 

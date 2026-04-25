@@ -14,7 +14,11 @@ from backend.app.api.v1.routes import health, proxies
 from backend.app.api.websocket import emit_stats, sio
 from backend.app.core.config import get_settings
 from backend.app.core.logger import configure_logging
-from backend.app.services.pipeline import scrape_test_and_store_alive, update_stock_stats
+from backend.app.services.pipeline import (
+    scrape_gfp_once_with_single_worker,
+    scrape_test_and_store_alive,
+    update_stock_stats,
+)
 from backend.app.services.runtime import finish_cycle, start_cycle, update_runtime_stats
 from backend.app.services.tester import select_expired_proxies, test_proxy_batch
 
@@ -48,13 +52,25 @@ async def proxy_cycle_loop() -> None:
         await asyncio.sleep(interval_seconds)
 
 
+async def gfp_worker_once() -> None:
+    logger.info("Starting one-shot GFP worker with a single tester")
+    with Session(engine) as session:
+        try:
+            await scrape_gfp_once_with_single_worker(session)
+        except Exception:  # noqa: BLE001
+            logger.exception("GFP one-shot worker failed")
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     configure_logging()
     init_db()
     with Session(engine) as session:
         update_stock_stats(session)
-    tasks = [asyncio.create_task(proxy_cycle_loop())]
+    tasks = [
+        asyncio.create_task(proxy_cycle_loop()),
+        asyncio.create_task(gfp_worker_once()),
+    ]
     try:
         yield
     finally:

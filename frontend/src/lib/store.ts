@@ -20,6 +20,12 @@ export type RuntimeStats = {
   stored: number;
   valid_stock: number;
   total_stock: number;
+  gfp_active: boolean;
+  gfp_scraped: number;
+  gfp_queued: number;
+  gfp_tested: number;
+  gfp_valid: number;
+  gfp_stored: number;
   last_error?: string | null;
   updated_at: string;
 };
