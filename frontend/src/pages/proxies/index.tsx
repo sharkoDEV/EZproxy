@@ -6,6 +6,7 @@ import { FilterBar } from "@/components/FilterBar";
 import { CardStat } from "@/components/CardStat";
 import { ProgressBar } from "@/components/ProgressBar";
 import { ProxyTable } from "@/components/ProxyTable";
+import { WorkerClientTable } from "@/components/WorkerClientTable";
 import { fetchProxies } from "@/lib/api";
 import { useAppStore } from "@/lib/store";
 
@@ -168,6 +169,7 @@ export default function ProxiesPage() {
           hint={`Stored: ${runtimeStats?.worker_stored ?? 0}`}
         />
       </div>
+      <WorkerClientTable clients={runtimeStats?.worker_clients ?? []} />
       {progress ? <ProgressBar {...progress} /> : null}
       <ProxyTable loading={isLoading} proxies={proxies} />
       <AddProxyModal open={addOpen} onClose={() => setAddOpen(false)} />

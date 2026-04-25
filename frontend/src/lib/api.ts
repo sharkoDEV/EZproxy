@@ -68,7 +68,19 @@ export type ProxyStats = {
   worker_reported: number;
   worker_valid: number;
   worker_stored: number;
+  worker_clients: WorkerClientStats[];
   avg_latency_ms?: number | null;
+};
+
+export type WorkerClientStats = {
+  worker_id: string;
+  active: boolean;
+  last_seen: string;
+  assigned_total: number;
+  in_flight: number;
+  reported: number;
+  valid: number;
+  stored: number;
 };
 
 export const API_BASE_URL =

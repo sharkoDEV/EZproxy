@@ -30,6 +30,7 @@ class RuntimeStats:
     worker_reported: int = 0
     worker_valid: int = 0
     worker_stored: int = 0
+    worker_clients: list[dict[str, Any]] = field(default_factory=list)
     last_error: str | None = None
     updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
@@ -58,6 +59,7 @@ class RuntimeStats:
             "worker_reported": self.worker_reported,
             "worker_valid": self.worker_valid,
             "worker_stored": self.worker_stored,
+            "worker_clients": self.worker_clients,
             "last_error": self.last_error,
             "updated_at": self.updated_at,
         }

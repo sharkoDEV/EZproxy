@@ -32,8 +32,20 @@ export type RuntimeStats = {
   worker_reported: number;
   worker_valid: number;
   worker_stored: number;
+  worker_clients: WorkerClientStats[];
   last_error?: string | null;
   updated_at: string;
+};
+
+export type WorkerClientStats = {
+  worker_id: string;
+  active: boolean;
+  last_seen: string;
+  assigned_total: number;
+  in_flight: number;
+  reported: number;
+  valid: number;
+  stored: number;
 };
 
 type AppState = {

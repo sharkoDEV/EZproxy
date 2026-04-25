@@ -73,6 +73,7 @@ class ProxyStats(BaseModel):
     worker_reported: int = 0
     worker_valid: int = 0
     worker_stored: int = 0
+    worker_clients: list[dict] = Field(default_factory=list)
     avg_latency_ms: float | None = None
 
 
