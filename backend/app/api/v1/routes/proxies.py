@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import ipaddress
+import re
+
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy import func
 from sqlmodel import Session, col, select
@@ -9,6 +12,8 @@ from backend.app.api.v1.routes.admin import require_admin
 from backend.app.api.websocket import emit_proxy_added, emit_stats
 from backend.app.models.proxy import Proxy
 from backend.app.schemas.proxy import (
+    ProxyBulkCreate,
+    ProxyBulkResult,
     ProxyCreate,
     ProxyList,
     ProxyRead,
@@ -20,6 +25,10 @@ from backend.app.services.tester import test_proxy
 from backend.app.services.utils import normalize_proxy_type
 
 router = APIRouter(prefix="/proxies", tags=["proxies"])
+PROXY_LINE_RE = re.compile(
+    r"^(?:(?P<scheme>https?|socks4|socks5)://)?(?P<ip>(?:\d{1,3}\.){3}\d{1,3})[:\s](?P<port>\d{1,5})$",
+    re.IGNORECASE,
+)
 
 
 def filtered_proxy_statement(
@@ -41,6 +50,45 @@ def filtered_proxy_statement(
     if search:
         statement = statement.where(col(Proxy.ip).contains(search))
     return statement
+
+
+def parse_manual_proxy_list(raw: str, default_type: str) -> tuple[list[Proxy], int]:
+    proxies: list[Proxy] = []
+    skipped = 0
+    seen: set[tuple[str, int]] = set()
+
+    for line in raw.replace(",", "\n").replace(";", "\n").splitlines():
+        value = line.strip()
+        if not value or value.startswith("#"):
+            continue
+
+        match = PROXY_LINE_RE.match(value)
+        if not match:
+            skipped += 1
+            continue
+
+        ip = match.group("ip")
+        try:
+            ipaddress.ip_address(ip)
+            port = int(match.group("port"))
+        except ValueError:
+            skipped += 1
+            continue
+
+        if not 1 <= port <= 65535:
+            skipped += 1
+            continue
+
+        key = (ip, port)
+        if key in seen:
+            skipped += 1
+            continue
+
+        seen.add(key)
+        proxy_type = normalize_proxy_type(match.group("scheme") or default_type)
+        proxies.append(Proxy(ip=ip, port=port, type=proxy_type))
+
+    return proxies, skipped
 
 
 @router.get("", response_model=ProxyList)
@@ -108,6 +156,41 @@ async def add_manual_proxy(
     await emit_proxy_added(ProxyRead.model_validate(proxy).model_dump(mode="json"))
     await emit_stats()
     return ProxyRead.model_validate(proxy)
+
+
+@router.post("/bulk", response_model=ProxyBulkResult, status_code=status.HTTP_201_CREATED)
+async def add_manual_proxy_bulk(
+    payload: ProxyBulkCreate,
+    _: bool = Depends(require_admin),
+    session: Session = Depends(get_session),
+) -> ProxyBulkResult:
+    parsed, skipped = parse_manual_proxy_list(payload.proxies, payload.type)
+    added = 0
+    updated = 0
+
+    for parsed_proxy in parsed:
+        proxy = session.exec(select(Proxy).where(Proxy.ip == parsed_proxy.ip, Proxy.port == parsed_proxy.port)).first()
+        if proxy is None:
+            proxy = parsed_proxy
+            added += 1
+        else:
+            updated += 1
+
+        proxy.type = parsed_proxy.type
+        proxy.country = payload.country or proxy.country
+        proxy.anonymity = payload.anonymity or proxy.anonymity
+        proxy.is_manual = True
+
+        if payload.test_now:
+            proxy = await test_proxy(proxy)
+
+        session.add(proxy)
+
+    session.commit()
+    update_stock_stats(session)
+    await emit_proxy_added({"bulk": True, "added": added, "updated": updated})
+    await emit_stats()
+    return ProxyBulkResult(added=added, updated=updated, skipped=skipped, total_parsed=len(parsed))
 
 
 @router.get("/export", response_model=None)

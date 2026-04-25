@@ -17,6 +17,21 @@ class ProxyCreate(ProxyBase):
     test_now: bool = True
 
 
+class ProxyBulkCreate(BaseModel):
+    proxies: str = Field(min_length=1)
+    type: str = "http"
+    country: str | None = None
+    anonymity: str | None = None
+    test_now: bool = False
+
+
+class ProxyBulkResult(BaseModel):
+    added: int
+    updated: int
+    skipped: int
+    total_parsed: int
+
+
 class ProxyRead(ProxyBase):
     model_config = ConfigDict(from_attributes=True)
 

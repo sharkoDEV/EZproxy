@@ -4,12 +4,11 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/Button";
 import { Modal } from "@/components/Modal";
-import { createProxy } from "@/lib/api";
+import { createProxyBulk } from "@/lib/api";
 import { useAppStore } from "@/lib/store";
 
 const schema = z.object({
-  ip: z.string().min(3, "IP required"),
-  port: z.coerce.number().int().min(1).max(65535),
+  proxies: z.string().min(3, "Paste at least one proxy"),
   type: z.enum(["http", "https", "socks4", "socks5"]),
   country: z.string().optional(),
   anonymity: z.string().optional(),
@@ -34,24 +33,25 @@ export function AddProxyModal({ onClose, open }: AddProxyModalProps) {
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      ip: "",
-      port: 8080,
+      proxies: "",
       type: "http",
       country: "",
       anonymity: "",
-      test_now: true,
+      test_now: false,
     },
   });
 
   async function onSubmit(values: FormValues) {
     try {
-      await createProxy({
+      const result = await createProxyBulk({
         ...values,
         country: values.country || undefined,
         anonymity: values.anonymity || undefined,
       });
       await queryClient.invalidateQueries({ queryKey: ["proxies"] });
-      showToast("Proxy added and pinned");
+      showToast(
+        `${result.added} added, ${result.updated} updated, ${result.skipped} skipped`,
+      );
       reset();
       onClose();
     } catch {
@@ -62,25 +62,21 @@ export function AddProxyModal({ onClose, open }: AddProxyModalProps) {
   return (
     <Modal open={open} title="Add manual proxy" onClose={onClose}>
       <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+        <label className="block text-sm font-semibold text-zinc-300">
+          Proxy list
+          <textarea
+            className="mt-2 min-h-48 w-full resize-none rounded-md border border-line bg-void px-3 py-2 font-mono text-sm text-ink focus:border-neon"
+            placeholder={`1.2.3.4:8080\nhttp://5.6.7.8:3128\nsocks5://9.10.11.12:1080`}
+            {...register("proxies")}
+          />
+        </label>
+        <p className="text-xs text-zinc-500">
+          One proxy per line. Commas and semicolons work too. URLs can override
+          the default type.
+        </p>
         <div className="grid gap-3 md:grid-cols-2">
           <label className="block text-sm font-semibold text-zinc-300">
-            IP
-            <input
-              className="mt-2 w-full rounded-md border border-line bg-void px-3 py-2 text-ink focus:border-neon"
-              placeholder="1.2.3.4"
-              {...register("ip")}
-            />
-          </label>
-          <label className="block text-sm font-semibold text-zinc-300">
-            Port
-            <input
-              className="mt-2 w-full rounded-md border border-line bg-void px-3 py-2 text-ink focus:border-neon"
-              type="number"
-              {...register("port")}
-            />
-          </label>
-          <label className="block text-sm font-semibold text-zinc-300">
-            Type
+            Default type
             <select
               className="mt-2 w-full rounded-md border border-line bg-void px-3 py-2 text-ink focus:border-neon"
               {...register("type")}
@@ -114,7 +110,7 @@ export function AddProxyModal({ onClose, open }: AddProxyModalProps) {
             type="checkbox"
             {...register("test_now")}
           />
-          Test it now, but keep it pinned even if it fails
+          Test every pasted proxy now. Leave off for big lists.
         </label>
         {Object.values(errors).length ? (
           <p className="text-sm text-magenta">Check the proxy fields.</p>

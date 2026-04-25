@@ -22,6 +22,21 @@ export type ProxyCreateInput = {
   test_now: boolean;
 };
 
+export type ProxyBulkCreateInput = {
+  proxies: string;
+  type: string;
+  country?: string;
+  anonymity?: string;
+  test_now: boolean;
+};
+
+export type ProxyBulkResult = {
+  added: number;
+  updated: number;
+  skipped: number;
+  total_parsed: number;
+};
+
 export type ProxyListResponse = {
   items: ProxyRecord[];
   total: number;
@@ -89,5 +104,10 @@ export async function fetchAdminMe() {
 
 export async function createProxy(payload: ProxyCreateInput) {
   const { data } = await api.post<ProxyRecord>("/proxies", payload);
+  return data;
+}
+
+export async function createProxyBulk(payload: ProxyBulkCreateInput) {
+  const { data } = await api.post<ProxyBulkResult>("/proxies/bulk", payload);
   return data;
 }
