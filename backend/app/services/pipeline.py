@@ -18,12 +18,17 @@ async def scrape_test_and_store_alive(session: Session) -> list[Proxy]:
     start_cycle("scraping")
     await emit_stats()
     scraped = await scrape_all_sources()
-    candidates: list[Proxy] = []
+    update_runtime_stats(phase="deduping", scraped=len(scraped), queued=0, tested=0, valid=0)
+    await emit_stats()
+    logger.info("Deduping %s scraped proxies against stored database", len(scraped))
 
-    for proxy in scraped:
-        existing = session.exec(select(Proxy).where(Proxy.ip == proxy.ip, Proxy.port == proxy.port)).first()
-        if not existing:
-            candidates.append(proxy)
+    existing_keys = set(session.exec(select(Proxy.ip, Proxy.port)).all())
+    candidates = [proxy for proxy in scraped if (proxy.ip, proxy.port) not in existing_keys]
+    logger.info(
+        "Deduped scraped proxies: %s new candidates, %s already stored",
+        len(candidates),
+        len(scraped) - len(candidates),
+    )
 
     if not candidates:
         update_stock_stats(session)

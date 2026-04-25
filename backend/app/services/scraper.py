@@ -138,7 +138,9 @@ async def scrape_gfp_sources() -> list[Proxy]:
 
 async def scrape_sources(sources: list[ProxySource]) -> list[Proxy]:
     settings = get_settings()
-    timeout = aiohttp.ClientTimeout(total=settings.config.test.timeout)
+    # Source downloads should not inherit very large proxy validation timeouts.
+    # A dead proxy can wait for minutes; a dead list source should fail fast.
+    timeout = aiohttp.ClientTimeout(total=min(settings.config.test.timeout, 45.0))
     async with aiohttp.ClientSession(timeout=timeout, headers={"User-Agent": "ezProxy/1.0"}) as session:
         results = await asyncio.gather(
             *(fetch_source(session, source) for source in sources),
