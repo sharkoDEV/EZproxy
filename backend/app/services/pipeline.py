@@ -16,6 +16,21 @@ from backend.app.services.tester import test_proxy_candidates
 logger = logging.getLogger(__name__)
 
 
+def proxy_event_payload(proxy: Proxy) -> dict:
+    return {
+        "id": proxy.id,
+        "ip": proxy.ip,
+        "port": proxy.port,
+        "type": proxy.type,
+        "country": proxy.country,
+        "anonymity": proxy.anonymity,
+        "latency_ms": proxy.latency_ms,
+        "last_checked": proxy.last_checked.isoformat() if proxy.last_checked else None,
+        "status": proxy.status,
+        "is_manual": proxy.is_manual,
+    }
+
+
 async def scrape_test_and_store_alive(session: Session) -> list[Proxy]:
     start_cycle("scraping")
     await emit_stats()
@@ -56,39 +71,28 @@ async def scrape_test_and_store_alive(session: Session) -> list[Proxy]:
         return []
 
     logger.info("Testing %s scraped candidates before storing", len(candidates))
-    tested = await test_proxy_candidates(candidates)
-    alive = [proxy for proxy in tested if proxy.status == "alive"] if settings.config.test.store_only_alive else tested
-
     stored: list[Proxy] = []
-    for proxy in alive:
+
+    async def store_live_result(proxy: Proxy, tested_count: int, total: int, valid_count: int) -> None:
+        if settings.config.test.store_only_alive and proxy.status != "alive":
+            return
         session.add(proxy)
         try:
             session.commit()
         except SQLAlchemyError:
             session.rollback()
-            continue
+            return
         session.refresh(proxy)
         stored.append(proxy)
-        await emit_proxy_added(
-            {
-                "id": proxy.id,
-                "ip": proxy.ip,
-                "port": proxy.port,
-                "type": proxy.type,
-                "country": proxy.country,
-                "anonymity": proxy.anonymity,
-                "latency_ms": proxy.latency_ms,
-                "last_checked": proxy.last_checked.isoformat() if proxy.last_checked else None,
-                "status": proxy.status,
-                "is_manual": proxy.is_manual,
-            }
-        )
+        await emit_proxy_added(proxy_event_payload(proxy))
         update_stock_stats(session)
-        update_runtime_stats(stored=len(stored))
+        update_runtime_stats(stored=len(stored), tested=tested_count, queued=total, valid=valid_count)
         await emit_stats()
 
+    tested = await test_proxy_candidates(candidates, on_result=store_live_result)
+    alive_count = sum(1 for proxy in tested if proxy.status == "alive")
     update_stock_stats(session)
-    update_runtime_stats(stored=len(stored), tested=len(tested), valid=len(alive))
+    update_runtime_stats(stored=len(stored), tested=len(tested), valid=alive_count)
     finish_cycle()
     await emit_stats()
     logger.info("Stored %s alive proxies from %s tested candidates", len(stored), len(tested))
@@ -137,22 +141,7 @@ async def scrape_gfp_once_with_single_worker(session: Session) -> None:
             else:
                 session.refresh(tested_proxy)
                 stored += 1
-                await emit_proxy_added(
-                    {
-                        "id": tested_proxy.id,
-                        "ip": tested_proxy.ip,
-                        "port": tested_proxy.port,
-                        "type": tested_proxy.type,
-                        "country": tested_proxy.country,
-                        "anonymity": tested_proxy.anonymity,
-                        "latency_ms": tested_proxy.latency_ms,
-                        "last_checked": tested_proxy.last_checked.isoformat()
-                        if tested_proxy.last_checked
-                        else None,
-                        "status": tested_proxy.status,
-                        "is_manual": tested_proxy.is_manual,
-                    }
-                )
+                await emit_proxy_added(proxy_event_payload(tested_proxy))
         if tested % 25 == 0 or tested == len(candidates):
             update_stock_stats(session)
             update_runtime_stats(gfp_tested=tested, gfp_valid=valid, gfp_stored=stored)

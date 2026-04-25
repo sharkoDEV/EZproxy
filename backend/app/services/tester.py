@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
 
 import aiohttp
@@ -148,7 +149,10 @@ async def test_proxy_batch(session: Session, proxies: list[Proxy]) -> list[Proxy
     return results
 
 
-async def test_proxy_candidates(proxies: list[Proxy]) -> list[Proxy]:
+async def test_proxy_candidates(
+    proxies: list[Proxy],
+    on_result: Callable[[Proxy, int, int, int], Awaitable[None]] | None = None,
+) -> list[Proxy]:
     settings = get_settings()
     semaphore = asyncio.Semaphore(settings.config.test.max_workers)
     total = len(proxies)
@@ -165,6 +169,8 @@ async def test_proxy_candidates(proxies: list[Proxy]) -> list[Proxy]:
         tested += 1
         valid += 1 if proxy.status == "alive" else 0
         update_runtime_stats(phase="testing", queued=total, tested=tested, valid=valid)
+        if on_result is not None:
+            await on_result(proxy, tested, total, valid)
         await emit_progress(tested, total, valid)
         await emit_stats()
         results.append(proxy)
