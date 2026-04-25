@@ -13,6 +13,10 @@ class ProxyBase(BaseModel):
     anonymity: str | None = None
 
 
+class ProxyCreate(ProxyBase):
+    test_now: bool = True
+
+
 class ProxyRead(ProxyBase):
     model_config = ConfigDict(from_attributes=True)
 
@@ -20,6 +24,7 @@ class ProxyRead(ProxyBase):
     latency_ms: float | None = None
     last_checked: datetime | None = None
     status: str
+    is_manual: bool = False
 
 
 class ProxyList(BaseModel):

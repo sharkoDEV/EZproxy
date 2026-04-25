@@ -98,7 +98,12 @@ async def test_proxy_batch(session: Session, proxies: list[Proxy]) -> list[Proxy
         proxy = await task
         tested += 1
         valid += 1 if proxy.status == "alive" else 0
-        if settings.config.test.delete_dead_after_check and proxy.status == "dead" and proxy.id is not None:
+        if (
+            settings.config.test.delete_dead_after_check
+            and proxy.status == "dead"
+            and proxy.id is not None
+            and not proxy.is_manual
+        ):
             session.delete(proxy)
             session.commit()
         else:

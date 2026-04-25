@@ -49,7 +49,14 @@ export function ProxyTable({ proxies, loading }: ProxyTableProps) {
             >
               <td className="px-4 py-3 font-semibold text-white">{proxy.ip}</td>
               <td className="px-4 py-3">{proxy.port}</td>
-              <td className="px-4 py-3 uppercase text-neon">{proxy.type}</td>
+              <td className="px-4 py-3 uppercase text-neon">
+                {proxy.type}
+                {proxy.is_manual ? (
+                  <span className="ml-2 rounded border border-magenta px-2 py-0.5 text-[10px] text-magenta">
+                    manual
+                  </span>
+                ) : null}
+              </td>
               <td className="px-4 py-3">{proxy.country ?? "n/a"}</td>
               <td className="px-4 py-3">{proxy.anonymity ?? "n/a"}</td>
               <td className="px-4 py-3">{formatLatency(proxy.latency_ms)}</td>

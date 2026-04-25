@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { AddProxyModal } from "@/components/AddProxyModal";
+import { Button } from "@/components/Button";
 import { FilterBar } from "@/components/FilterBar";
 import { CardStat } from "@/components/CardStat";
 import { ProgressBar } from "@/components/ProgressBar";
@@ -10,6 +12,9 @@ import { useAppStore } from "@/lib/store";
 export default function ProxiesPage() {
   const progress = useAppStore((state) => state.progress);
   const runtimeStats = useAppStore((state) => state.runtimeStats);
+  const adminToken = useAppStore((state) => state.adminToken);
+  const showToast = useAppStore((state) => state.showToast);
+  const [addOpen, setAddOpen] = useState(false);
   const [filters, setFilters] = useState({
     search: "",
     type: "",
@@ -59,6 +64,26 @@ export default function ProxiesPage() {
         <div className="rounded-lg border border-line bg-panel px-4 py-2 text-sm text-zinc-400">
           Auto scrape + re-check is running in the backend.
         </div>
+      </div>
+      <div className="flex items-center justify-between gap-3 rounded-lg border border-line bg-panel p-3">
+        <div>
+          <p className="text-sm font-bold text-white">Manual admin proxies</p>
+          <p className="text-xs text-zinc-400">
+            Added proxies are pinned in the database and survive backend restart.
+          </p>
+        </div>
+        <Button
+          variant={adminToken ? "primary" : "ghost"}
+          onClick={() => {
+            if (!adminToken) {
+              showToast("Login as admin first", "error");
+              return;
+            }
+            setAddOpen(true);
+          }}
+        >
+          Add proxy
+        </Button>
       </div>
       <FilterBar
         values={filters}
@@ -119,6 +144,7 @@ export default function ProxiesPage() {
       </div>
       {progress ? <ProgressBar {...progress} /> : null}
       <ProxyTable loading={isLoading} proxies={proxies} />
+      <AddProxyModal open={addOpen} onClose={() => setAddOpen(false)} />
     </section>
   );
 }

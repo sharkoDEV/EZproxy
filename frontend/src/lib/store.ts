@@ -33,11 +33,13 @@ export type RuntimeStats = {
 type AppState = {
   collapsed: boolean;
   theme: "dark" | "light";
+  adminToken?: string;
   toast?: { message: string; tone: ToastTone };
   progress?: Progress;
   runtimeStats?: RuntimeStats;
   setCollapsed: (collapsed: boolean) => void;
   setTheme: (theme: "dark" | "light") => void;
+  setAdminToken: (token?: string) => void;
   showToast: (message: string, tone?: ToastTone) => void;
   clearToast: () => void;
   setProgress: (progress?: Progress) => void;
@@ -49,6 +51,16 @@ export const useAppStore = create<AppState>((set) => ({
   theme: "dark",
   setCollapsed: (collapsed) => set({ collapsed }),
   setTheme: (theme) => set({ theme }),
+  setAdminToken: (adminToken) => {
+    if (typeof window !== "undefined") {
+      if (adminToken) {
+        window.localStorage.setItem("ezproxy-token", adminToken);
+      } else {
+        window.localStorage.removeItem("ezproxy-token");
+      }
+    }
+    set({ adminToken });
+  },
   showToast: (message, tone = "success") => set({ toast: { message, tone } }),
   clearToast: () => set({ toast: undefined }),
   setProgress: (progress) => set({ progress }),

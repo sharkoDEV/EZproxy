@@ -54,6 +54,10 @@ class Settings(BaseModel):
     api_prefix: str = "/api/v1"
     database_url: str = Field(default_factory=lambda: os.getenv("DATABASE_URL", "sqlite:///./ezproxy.db"))
     cors_origins: list[str] = Field(default_factory=lambda: os.getenv("CORS_ORIGINS", "*").split(","))
+    admin_password: str = Field(default_factory=lambda: os.getenv("ADMIN_PASSWORD", "admin"))
+    admin_token_secret: str = Field(
+        default_factory=lambda: os.getenv("ADMIN_TOKEN_SECRET", os.getenv("ADMIN_PASSWORD", "admin"))
+    )
     config: AppConfig
 
 

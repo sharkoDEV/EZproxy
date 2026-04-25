@@ -18,4 +18,4 @@ class Proxy(SQLModel, table=True):
     latency_ms: float | None = None
     last_checked: datetime | None = None
     status: str = Field(default="unknown", index=True)
-
+    is_manual: bool = Field(default=False, index=True)

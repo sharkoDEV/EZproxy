@@ -1,17 +1,23 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy import func
 from sqlmodel import Session, col, select
 
 from backend.app.api.v1.deps import get_session
+from backend.app.api.v1.routes.admin import require_admin
+from backend.app.api.websocket import emit_proxy_added, emit_stats
 from backend.app.models.proxy import Proxy
 from backend.app.schemas.proxy import (
+    ProxyCreate,
     ProxyList,
     ProxyRead,
     ProxyStats,
 )
+from backend.app.services.pipeline import update_stock_stats
 from backend.app.services.runtime import runtime_stats
+from backend.app.services.tester import test_proxy
+from backend.app.services.utils import normalize_proxy_type
 
 router = APIRouter(prefix="/proxies", tags=["proxies"])
 
@@ -75,6 +81,35 @@ def proxy_stats(session: Session = Depends(get_session)) -> ProxyStats:
     )
 
 
+@router.post("", response_model=ProxyRead, status_code=status.HTTP_201_CREATED)
+async def add_manual_proxy(
+    payload: ProxyCreate,
+    _: bool = Depends(require_admin),
+    session: Session = Depends(get_session),
+) -> ProxyRead:
+    proxy_type = normalize_proxy_type(payload.type)
+    proxy = session.exec(select(Proxy).where(Proxy.ip == payload.ip, Proxy.port == payload.port)).first()
+
+    if proxy is None:
+        proxy = Proxy(ip=payload.ip, port=payload.port)
+
+    proxy.type = proxy_type
+    proxy.country = payload.country or None
+    proxy.anonymity = payload.anonymity or None
+    proxy.is_manual = True
+
+    if payload.test_now:
+        proxy = await test_proxy(proxy)
+
+    session.add(proxy)
+    session.commit()
+    session.refresh(proxy)
+    update_stock_stats(session)
+    await emit_proxy_added(ProxyRead.model_validate(proxy).model_dump(mode="json"))
+    await emit_stats()
+    return ProxyRead.model_validate(proxy)
+
+
 @router.get("/export", response_model=None)
 def export_proxies(
     session: Session = Depends(get_session),
@@ -89,9 +124,12 @@ def export_proxies(
     if format == "json":
         return [ProxyRead.model_validate(proxy) for proxy in proxies]
     if format == "csv":
-        rows = ["ip,port,type,country,anonymity,latency_ms,status"]
+        rows = ["ip,port,type,country,anonymity,latency_ms,status,is_manual"]
         rows.extend(
-            f"{p.ip},{p.port},{p.type},{p.country or ''},{p.anonymity or ''},{p.latency_ms or ''},{p.status}"
+            (
+                f"{p.ip},{p.port},{p.type},{p.country or ''},{p.anonymity or ''},"
+                f"{p.latency_ms or ''},{p.status},{p.is_manual}"
+            )
             for p in proxies
         )
         return Response("\n".join(rows), media_type="text/csv")

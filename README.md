@@ -1,6 +1,6 @@
 # ezProxy
 
-ezProxy is a free, accountless proxy management SaaS-style app. It scrapes public proxy lists, stores proxies with SQLModel, tests them through `http://httpbin.org/ip`, re-checks stale entries on a configurable interval, exposes a REST API and streams status updates through Socket.IO.
+ezProxy is a free proxy management SaaS-style app. It scrapes public proxy lists, stores proxies with SQLModel, tests them through `http://httpbin.org/ip`, re-checks stale entries on a configurable interval, exposes a REST API and streams status updates through Socket.IO. The public dashboard stays read/export focused; manual proxy creation is protected by one local admin password.
 
 ## Stack
 
@@ -14,6 +14,7 @@ ezProxy is a free, accountless proxy management SaaS-style app. It scrapes publi
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r backend/requirements.txt
+$env:ADMIN_PASSWORD="change-me"
 uvicorn backend.app.main:app --reload
 ```
 
@@ -26,6 +27,8 @@ npm run dev
 ```
 
 Open the UI at `http://localhost:3000` and Swagger at `http://localhost:8000/docs`.
+
+Click `Admin` in the header, enter `ADMIN_PASSWORD`, then use `Add proxy` on the Proxies page. Manually added proxies are pinned with `is_manual=true`, kept in the database after backend restarts, and are not auto-deleted when a check marks them dead.
 
 ## Configuration
 
@@ -42,6 +45,8 @@ Use `.env.example` as a starting point. If `DATABASE_URL` is not set, ezProxy us
 
 ```dotenv
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/ezproxy
+ADMIN_PASSWORD=change-me
+ADMIN_TOKEN_SECRET=change-this-local-secret
 ```
 
 Frontend environment variables live in `frontend/.env.example`.
@@ -49,14 +54,11 @@ Frontend environment variables live in `frontend/.env.example`.
 ## API
 
 - `GET /api/v1/health`
+- `POST /api/v1/admin/login`
+- `GET /api/v1/admin/me`
 - `GET /api/v1/proxies`
-- `POST /api/v1/proxies`
-- `GET /api/v1/proxies/{id}`
-- `PATCH /api/v1/proxies/{id}`
-- `DELETE /api/v1/proxies/{id}`
-- `POST /api/v1/proxies/{id}/test`
-- `POST /api/v1/proxies/test-batch`
-- `POST /api/v1/proxies/scrape`
+- `POST /api/v1/proxies` with admin bearer token
+- `GET /api/v1/proxies/stats`
 - `GET /api/v1/proxies/export?format=txt|csv|json`
 
 Socket.IO uses namespace `/ws/proxies` and emits `proxy_status` plus `progress`.

@@ -4,12 +4,18 @@ import { Button } from "../Button";
 type HeaderProps = {
   collapsed: boolean;
   theme: "dark" | "light";
+  isAdmin: boolean;
   onToggleSidebar: () => void;
   onToggleTheme: () => void;
+  onOpenAdmin: () => void;
+  onLogoutAdmin: () => void;
 };
 
 export function Header({
   collapsed,
+  isAdmin,
+  onLogoutAdmin,
+  onOpenAdmin,
   onToggleSidebar,
   onToggleTheme,
   theme,
@@ -45,6 +51,13 @@ export function Header({
           ) : (
             <SunIcon className="h-5 w-5" />
           )}
+        </Button>
+        <Button
+          aria-label={isAdmin ? "Logout admin" : "Login admin"}
+          variant={isAdmin ? "primary" : "ghost"}
+          onClick={isAdmin ? onLogoutAdmin : onOpenAdmin}
+        >
+          {isAdmin ? "Admin ON" : "Admin"}
         </Button>
         <div className="grid h-10 w-10 place-items-center rounded-full border border-neon bg-panel text-sm font-bold text-neon">
           EZ

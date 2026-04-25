@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session
 
 from backend.app.api.v1.deps import engine, init_db
-from backend.app.api.v1.routes import health, proxies
+from backend.app.api.v1.routes import admin, health, proxies
 from backend.app.api.websocket import emit_stats, sio
 from backend.app.core.config import get_settings
 from backend.app.core.logger import configure_logging
@@ -91,6 +91,7 @@ fastapi_app.add_middleware(
     allow_headers=["*"],
 )
 fastapi_app.include_router(health.router, prefix=settings.api_prefix)
+fastapi_app.include_router(admin.router, prefix=settings.api_prefix)
 fastapi_app.include_router(proxies.router, prefix=settings.api_prefix)
 
 app = socketio.ASGIApp(sio, other_asgi_app=fastapi_app, socketio_path="socket.io")

@@ -10,6 +10,16 @@ export type ProxyRecord = {
   latency_ms?: number | null;
   last_checked?: string | null;
   status: "alive" | "dead" | "unknown" | string;
+  is_manual: boolean;
+};
+
+export type ProxyCreateInput = {
+  ip: string;
+  port: number;
+  type: string;
+  country?: string;
+  anonymity?: string;
+  test_now: boolean;
 };
 
 export type ProxyListResponse = {
@@ -61,5 +71,23 @@ export async function fetchProxyStats() {
 
 export async function fetchProxy(id: string | number) {
   const { data } = await api.get<ProxyRecord>(`/proxies/${id}`);
+  return data;
+}
+
+export async function loginAdmin(password: string) {
+  const { data } = await api.post<{ authenticated: boolean; token: string }>(
+    "/admin/login",
+    { password },
+  );
+  return data;
+}
+
+export async function fetchAdminMe() {
+  const { data } = await api.get<{ authenticated: boolean }>("/admin/me");
+  return data;
+}
+
+export async function createProxy(payload: ProxyCreateInput) {
+  const { data } = await api.post<ProxyRecord>("/proxies", payload);
   return data;
 }
