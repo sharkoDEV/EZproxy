@@ -54,12 +54,20 @@ export type ProxyStats = {
   cycle_valid: number;
   cycle_active: boolean;
   phase: string;
+  source?: string | null;
+  scraped: number;
+  queued: number;
+  tested: number;
+  valid: number;
+  stored: number;
+  valid_stock: number;
+  total_stock: number;
   avg_latency_ms?: number | null;
 };
 
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1",
-  timeout: 450000,
+  timeout: 120000,
 });
 
 api.interceptors.request.use((config) => {

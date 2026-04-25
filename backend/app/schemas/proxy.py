@@ -59,6 +59,14 @@ class ProxyStats(BaseModel):
     cycle_valid: int = 0
     cycle_active: bool = False
     phase: str = "idle"
+    source: str | None = None
+    scraped: int = 0
+    queued: int = 0
+    tested: int = 0
+    valid: int = 0
+    stored: int = 0
+    valid_stock: int = 0
+    total_stock: int = 0
     avg_latency_ms: float | None = None
 
 

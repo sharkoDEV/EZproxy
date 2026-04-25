@@ -125,6 +125,14 @@ def proxy_stats(session: Session = Depends(get_session)) -> ProxyStats:
         cycle_valid=runtime_stats.valid,
         cycle_active=runtime_stats.cycle_active,
         phase=runtime_stats.phase,
+        source=runtime_stats.source,
+        scraped=runtime_stats.scraped,
+        queued=runtime_stats.queued,
+        tested=runtime_stats.tested,
+        valid=runtime_stats.valid,
+        stored=runtime_stats.stored,
+        valid_stock=runtime_stats.valid_stock,
+        total_stock=runtime_stats.total_stock,
         avg_latency_ms=avg_latency,
     )
 

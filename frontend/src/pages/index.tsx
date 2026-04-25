@@ -11,10 +11,12 @@ export default function Dashboard() {
     queryFn: fetchProxyStats,
     refetchInterval: 1500,
   });
-  const validStock = runtimeStats?.valid_stock ?? data?.alive ?? 0;
-  const toTest = runtimeStats
-    ? Math.max(runtimeStats.queued - runtimeStats.tested, 0)
-    : (data?.to_test ?? 0);
+  const live = runtimeStats ?? data;
+  const validStock = live?.valid_stock ?? data?.alive ?? 0;
+  const scraped = live?.scraped ?? 0;
+  const tested = live?.tested ?? data?.cycle_tested ?? 0;
+  const valid = live?.valid ?? data?.cycle_valid ?? 0;
+  const toTest = live ? Math.max(live.queued - live.tested, 0) : (data?.to_test ?? 0);
   const phase = runtimeStats?.phase ?? data?.phase ?? "idle";
 
   return (
@@ -33,13 +35,13 @@ export default function Dashboard() {
       </div>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <CardStat
-          hint={isLoading ? "Loading inventory" : "Stored proxy records"}
-          label="Total proxies"
-          value={data?.total ?? 0}
+          hint={isLoading ? "Loading inventory" : "Raw proxies found this cycle"}
+          label="Scraped"
+          value={scraped}
         />
         <CardStat
-          hint="Reachable during last test"
-          label="Actifs"
+          hint={`Alive stored: ${validStock}`}
+          label="Valides stockes"
           value={validStock}
         />
         <CardStat
@@ -48,14 +50,14 @@ export default function Dashboard() {
           value={toTest}
         />
         <CardStat
-          hint="Across alive proxies"
-          label="Latence moyenne"
-          value={formatLatency(data?.avg_latency_ms)}
+          hint={`Valid found this cycle: ${valid}`}
+          label="Testes cycle"
+          value={tested}
         />
         <CardStat
-          hint={`${data?.unknown ?? 0} still waiting for validation`}
-          label="Dead / unknown"
-          value={`${data?.dead ?? 0} / ${data?.unknown ?? 0}`}
+          hint="Across alive stored proxies"
+          label="Latence moyenne"
+          value={formatLatency(data?.avg_latency_ms)}
         />
       </div>
       <div className="mt-6 rounded-xl border border-line bg-panel p-6 shadow-glow">
