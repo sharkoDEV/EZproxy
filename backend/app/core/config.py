@@ -28,7 +28,7 @@ class TestSettings(BaseModel):
             "https://api.ipify.org?format=json",
         ]
     )
-    timeout: float = 5.0
+    timeout: float = 20.0
     max_workers: int = 200
     cycle_interval_minutes: int = 180
     scrape_on_startup: bool = True

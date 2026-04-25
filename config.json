@@ -374,7 +374,7 @@
       "https://httpbin.org/ip",
       "https://api.ipify.org?format=json"
     ],
-    "timeout": 12.0,
+    "timeout": 20.0,
     "max_workers": 200,
     "cycle_interval_minutes": 180,
     "scrape_on_startup": true,
