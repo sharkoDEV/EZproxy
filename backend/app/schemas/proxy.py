@@ -67,6 +67,12 @@ class ProxyStats(BaseModel):
     stored: int = 0
     valid_stock: int = 0
     total_stock: int = 0
+    worker_pending: int = 0
+    worker_assigned: int = 0
+    worker_active: int = 0
+    worker_reported: int = 0
+    worker_valid: int = 0
+    worker_stored: int = 0
     avg_latency_ms: float | None = None
 
 

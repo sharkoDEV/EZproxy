@@ -146,6 +146,28 @@ export default function ProxiesPage() {
           hint="Alive proxies added from GFP"
         />
       </div>
+      <div className="grid gap-3 md:grid-cols-4">
+        <CardStat
+          label="Workers actifs"
+          value={runtimeStats?.worker_active ?? 0}
+          hint="Remote C clients seen recently"
+        />
+        <CardStat
+          label="Worker pending"
+          value={runtimeStats?.worker_pending ?? 0}
+          hint="Jobs waiting for clients"
+        />
+        <CardStat
+          label="Worker assigned"
+          value={runtimeStats?.worker_assigned ?? 0}
+          hint="Jobs currently checked remotely"
+        />
+        <CardStat
+          label="Worker valides"
+          value={runtimeStats?.worker_valid ?? 0}
+          hint={`Stored: ${runtimeStats?.worker_stored ?? 0}`}
+        />
+      </div>
       {progress ? <ProgressBar {...progress} /> : null}
       <ProxyTable loading={isLoading} proxies={proxies} />
       <AddProxyModal open={addOpen} onClose={() => setAddOpen(false)} />

@@ -62,6 +62,12 @@ export type ProxyStats = {
   stored: number;
   valid_stock: number;
   total_stock: number;
+  worker_pending: number;
+  worker_assigned: number;
+  worker_active: number;
+  worker_reported: number;
+  worker_valid: number;
+  worker_stored: number;
   avg_latency_ms?: number | null;
 };
 

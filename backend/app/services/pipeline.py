@@ -6,7 +6,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import Session, select
 
 from backend.app.api.websocket import emit_proxy_added, emit_stats
+from backend.app.core.config import get_settings
 from backend.app.models.proxy import Proxy
+from backend.app.services.distributed import distributed_queue
 from backend.app.services.runtime import finish_cycle, start_cycle, update_runtime_stats
 from backend.app.services.scraper import scrape_all_sources, scrape_gfp_sources
 from backend.app.services.tester import test_proxy_candidates
@@ -38,11 +40,23 @@ async def scrape_test_and_store_alive(session: Session) -> list[Proxy]:
 
     update_runtime_stats(phase="testing", scraped=len(scraped), queued=len(candidates), tested=0, valid=0)
     await emit_stats()
-    logger.info("Testing %s scraped candidates before storing", len(candidates))
-    tested = await test_proxy_candidates(candidates)
-    from backend.app.core.config import get_settings
 
     settings = get_settings()
+    if settings.config.workers.enabled:
+        await distributed_queue.enqueue(candidates)
+        update_runtime_stats(
+            phase="distributed_testing",
+            scraped=len(scraped),
+            queued=len(candidates),
+            tested=0,
+            valid=0,
+        )
+        await emit_stats()
+        logger.info("Queued %s candidates for distributed worker clients", len(candidates))
+        return []
+
+    logger.info("Testing %s scraped candidates before storing", len(candidates))
+    tested = await test_proxy_candidates(candidates)
     alive = [proxy for proxy in tested if proxy.status == "alive"] if settings.config.test.store_only_alive else tested
 
     stored: list[Proxy] = []

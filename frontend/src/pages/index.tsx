@@ -71,6 +71,11 @@ export default function Dashboard() {
           {runtimeStats?.gfp_tested ?? 0}/{runtimeStats?.gfp_queued ?? 0}{" "}
           checked, {runtimeStats?.gfp_valid ?? 0} valid.
         </p>
+        <p className="mt-3 text-sm text-zinc-500">
+          Distributed workers: {live?.worker_active ?? 0} active,{" "}
+          {live?.worker_pending ?? 0} pending, {live?.worker_assigned ?? 0}{" "}
+          assigned, {live?.worker_valid ?? 0} valid reported.
+        </p>
       </div>
     </section>
   );

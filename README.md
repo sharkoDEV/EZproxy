@@ -40,6 +40,20 @@ Backend behavior is centralized in `config.json`:
 - `test.max_workers`: max concurrent proxy tests
 - `test.recheck_interval_minutes`: automatic re-check interval
 - `filters`: default type, country, anonymity and latency filters
+- `workers`: optional distributed checker queue for external C workers
+
+To make the server scrape and let remote workers test proxies, enable workers and set the shared password:
+
+```json
+"workers": {
+  "enabled": true,
+  "password": "your-worker-password",
+  "claim_size": 100,
+  "assignment_timeout_seconds": 120
+}
+```
+
+Build the C worker from `clients/c-worker` on each checker machine.
 
 Use `.env.example` as a starting point. If `DATABASE_URL` is not set, ezProxy uses `sqlite:///./ezproxy.db` so local development can start without PostgreSQL. For production-like use, set:
 

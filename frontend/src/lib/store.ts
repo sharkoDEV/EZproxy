@@ -26,6 +26,12 @@ export type RuntimeStats = {
   gfp_tested: number;
   gfp_valid: number;
   gfp_stored: number;
+  worker_pending: number;
+  worker_assigned: number;
+  worker_active: number;
+  worker_reported: number;
+  worker_valid: number;
+  worker_stored: number;
   last_error?: string | null;
   updated_at: string;
 };

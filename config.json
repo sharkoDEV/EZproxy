@@ -386,5 +386,11 @@
     "country": [],
     "anonymity": [],
     "max_latency_ms": null
+  },
+  "workers": {
+    "enabled": false,
+    "password": "change-me",
+    "claim_size": 100,
+    "assignment_timeout_seconds": 120
   }
 }

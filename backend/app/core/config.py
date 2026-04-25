@@ -43,10 +43,18 @@ class FilterSettings(BaseModel):
     max_latency_ms: float | None = None
 
 
+class WorkerSettings(BaseModel):
+    enabled: bool = False
+    password: str = Field(default_factory=lambda: os.getenv("WORKER_PASSWORD", "change-me"))
+    claim_size: int = 100
+    assignment_timeout_seconds: int = 120
+
+
 class AppConfig(BaseModel):
     sources: list[ProxySource]
     test: TestSettings = Field(default_factory=TestSettings)
     filters: FilterSettings = Field(default_factory=FilterSettings)
+    workers: WorkerSettings = Field(default_factory=WorkerSettings)
 
 
 class Settings(BaseModel):

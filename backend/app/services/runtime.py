@@ -24,6 +24,12 @@ class RuntimeStats:
     gfp_tested: int = 0
     gfp_valid: int = 0
     gfp_stored: int = 0
+    worker_pending: int = 0
+    worker_assigned: int = 0
+    worker_active: int = 0
+    worker_reported: int = 0
+    worker_valid: int = 0
+    worker_stored: int = 0
     last_error: str | None = None
     updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
@@ -46,6 +52,12 @@ class RuntimeStats:
             "gfp_tested": self.gfp_tested,
             "gfp_valid": self.gfp_valid,
             "gfp_stored": self.gfp_stored,
+            "worker_pending": self.worker_pending,
+            "worker_assigned": self.worker_assigned,
+            "worker_active": self.worker_active,
+            "worker_reported": self.worker_reported,
+            "worker_valid": self.worker_valid,
+            "worker_stored": self.worker_stored,
             "last_error": self.last_error,
             "updated_at": self.updated_at,
         }

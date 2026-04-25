@@ -133,6 +133,12 @@ def proxy_stats(session: Session = Depends(get_session)) -> ProxyStats:
         stored=runtime_stats.stored,
         valid_stock=runtime_stats.valid_stock,
         total_stock=runtime_stats.total_stock,
+        worker_pending=runtime_stats.worker_pending,
+        worker_assigned=runtime_stats.worker_assigned,
+        worker_active=runtime_stats.worker_active,
+        worker_reported=runtime_stats.worker_reported,
+        worker_valid=runtime_stats.worker_valid,
+        worker_stored=runtime_stats.worker_stored,
         avg_latency_ms=avg_latency,
     )
 
