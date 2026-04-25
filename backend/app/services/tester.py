@@ -17,14 +17,21 @@ from backend.app.services.runtime import update_runtime_stats
 logger = logging.getLogger(__name__)
 
 
-def _proxy_url(proxy: Proxy) -> str:
-    scheme = "http" if proxy.type in {"http", "https"} else proxy.type
+def _proxy_url(proxy: Proxy, proxy_type: str | None = None) -> str:
+    resolved_type = proxy_type or proxy.type
+    scheme = "http" if resolved_type in {"http", "https"} else resolved_type
     return f"{scheme}://{proxy.ip}:{proxy.port}"
 
 
-async def _fetch_test_url(test_url: str, proxy: Proxy, proxy_url: str, timeout_value: float) -> None:
+def _looks_like_http_reply_to_socks(exc: Exception) -> bool:
+    message = repr(exc).lower()
+    return "unexpected reply version" in message and "0x48" in message
+
+
+async def _fetch_test_url(test_url: str, proxy: Proxy, proxy_type: str, timeout_value: float) -> None:
+    proxy_url = _proxy_url(proxy, proxy_type)
     client_timeout = aiohttp.ClientTimeout(total=timeout_value)
-    if proxy.type in {"socks4", "socks5"}:
+    if proxy_type in {"socks4", "socks5"}:
         connector = ProxyConnector.from_url(proxy_url)
         async with aiohttp.ClientSession(timeout=client_timeout, connector=connector) as session:
             async with session.get(test_url) as response:
@@ -60,17 +67,41 @@ async def test_proxy(proxy: Proxy, timeout: float | None = None) -> Proxy:
     settings = get_settings()
     timeout_value = timeout or settings.config.test.timeout
     start = time.perf_counter()
-    proxy_url = _proxy_url(proxy)
 
     last_error: Exception | None = None
-    for test_url in _test_urls():
-        try:
-            await _fetch_test_url(test_url, proxy, proxy_url, timeout_value)
-            proxy.status = "alive"
-            proxy.latency_ms = round((time.perf_counter() - start) * 1000, 2)
+    proxy_types = [proxy.type]
+    tested_types: set[str] = set()
+    alive_type: str | None = None
+
+    while proxy_types:
+        proxy_type = proxy_types.pop(0)
+        tested_types.add(proxy_type)
+        if proxy_type != proxy.type:
+            logger.debug("Retrying %s:%s as %s after SOCKS protocol mismatch", proxy.ip, proxy.port, proxy_type)
+
+        for test_url in _test_urls():
+            try:
+                await _fetch_test_url(test_url, proxy, proxy_type, timeout_value)
+                alive_type = proxy_type
+                break
+            except Exception as exc:  # noqa: BLE001
+                last_error = exc
+                if (
+                    proxy_type in {"socks4", "socks5"}
+                    and "http" not in tested_types
+                    and "http" not in proxy_types
+                    and _looks_like_http_reply_to_socks(exc)
+                ):
+                    proxy_types.append("http")
+                    break
+
+        if alive_type:
             break
-        except Exception as exc:  # noqa: BLE001
-            last_error = exc
+
+    if alive_type:
+        proxy.type = alive_type
+        proxy.status = "alive"
+        proxy.latency_ms = round((time.perf_counter() - start) * 1000, 2)
     else:
         exc = last_error or RuntimeError("Proxy test failed")
         logger.info("Proxy %s:%s failed: %r", proxy.ip, proxy.port, exc)
