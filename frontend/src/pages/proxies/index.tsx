@@ -13,6 +13,7 @@ export default function ProxiesPage() {
   const progress = useAppStore((state) => state.progress);
   const runtimeStats = useAppStore((state) => state.runtimeStats);
   const adminToken = useAppStore((state) => state.adminToken);
+  const socketConnected = useAppStore((state) => state.socketConnected);
   const showToast = useAppStore((state) => state.showToast);
   const [addOpen, setAddOpen] = useState(false);
   const [filters, setFilters] = useState({
@@ -36,6 +37,7 @@ export default function ProxiesPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["proxies", params],
     queryFn: () => fetchProxies(params),
+    refetchInterval: 2500,
   });
 
   function exportFile(format: "txt" | "csv") {
@@ -62,7 +64,9 @@ export default function ProxiesPage() {
           </h2>
         </div>
         <div className="rounded-lg border border-line bg-panel px-4 py-2 text-sm text-zinc-400">
-          Auto scrape + re-check is running in the backend.
+          {socketConnected
+            ? "Live Socket.IO sync is connected."
+            : "Reconnecting live sync, polling backup is active."}
         </div>
       </div>
       <div className="flex items-center justify-between gap-3 rounded-lg border border-line bg-panel p-3">

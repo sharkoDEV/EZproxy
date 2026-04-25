@@ -51,7 +51,6 @@ export function AddProxyModal({ onClose, open }: AddProxyModalProps) {
         anonymity: values.anonymity || undefined,
       });
       await queryClient.invalidateQueries({ queryKey: ["proxies"] });
-      await queryClient.invalidateQueries({ queryKey: ["proxy-stats"] });
       showToast("Proxy added and pinned");
       reset();
       onClose();

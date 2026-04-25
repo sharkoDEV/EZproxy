@@ -34,12 +34,14 @@ type AppState = {
   collapsed: boolean;
   theme: "dark" | "light";
   adminToken?: string;
+  socketConnected: boolean;
   toast?: { message: string; tone: ToastTone };
   progress?: Progress;
   runtimeStats?: RuntimeStats;
   setCollapsed: (collapsed: boolean) => void;
   setTheme: (theme: "dark" | "light") => void;
   setAdminToken: (token?: string) => void;
+  setSocketConnected: (connected: boolean) => void;
   showToast: (message: string, tone?: ToastTone) => void;
   clearToast: () => void;
   setProgress: (progress?: Progress) => void;
@@ -49,6 +51,7 @@ type AppState = {
 export const useAppStore = create<AppState>((set) => ({
   collapsed: false,
   theme: "dark",
+  socketConnected: false,
   setCollapsed: (collapsed) => set({ collapsed }),
   setTheme: (theme) => set({ theme }),
   setAdminToken: (adminToken) => {
@@ -61,6 +64,7 @@ export const useAppStore = create<AppState>((set) => ({
     }
     set({ adminToken });
   },
+  setSocketConnected: (socketConnected) => set({ socketConnected }),
   showToast: (message, tone = "success") => set({ toast: { message, tone } }),
   clearToast: () => set({ toast: undefined }),
   setProgress: (progress) => set({ progress }),

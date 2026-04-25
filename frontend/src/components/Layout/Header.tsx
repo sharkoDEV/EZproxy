@@ -5,6 +5,7 @@ type HeaderProps = {
   collapsed: boolean;
   theme: "dark" | "light";
   isAdmin: boolean;
+  socketConnected: boolean;
   onToggleSidebar: () => void;
   onToggleTheme: () => void;
   onOpenAdmin: () => void;
@@ -16,6 +17,7 @@ export function Header({
   isAdmin,
   onLogoutAdmin,
   onOpenAdmin,
+  socketConnected,
   onToggleSidebar,
   onToggleTheme,
   theme,
@@ -41,6 +43,15 @@ export function Header({
         </div>
       </div>
       <div className="flex items-center gap-3">
+        <div
+          className={`rounded-full border px-3 py-1 text-xs font-bold ${
+            socketConnected
+              ? "border-neon text-neon"
+              : "border-magenta text-magenta"
+          }`}
+        >
+          {socketConnected ? "LIVE" : "SYNC..."}
+        </div>
         <Button
           aria-label="Toggle theme"
           variant="secondary"

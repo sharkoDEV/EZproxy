@@ -61,6 +61,7 @@ async def scrape_test_and_store_alive(session: Session) -> list[Proxy]:
                 "latency_ms": proxy.latency_ms,
                 "last_checked": proxy.last_checked.isoformat() if proxy.last_checked else None,
                 "status": proxy.status,
+                "is_manual": proxy.is_manual,
             }
         )
         update_stock_stats(session)
@@ -130,6 +131,7 @@ async def scrape_gfp_once_with_single_worker(session: Session) -> None:
                         if tested_proxy.last_checked
                         else None,
                         "status": tested_proxy.status,
+                        "is_manual": tested_proxy.is_manual,
                     }
                 )
         if tested % 25 == 0 or tested == len(candidates):

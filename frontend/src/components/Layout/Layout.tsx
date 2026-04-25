@@ -13,6 +13,7 @@ export function Layout({ children }: PropsWithChildren) {
   const collapsed = useAppStore((state) => state.collapsed);
   const theme = useAppStore((state) => state.theme);
   const adminToken = useAppStore((state) => state.adminToken);
+  const socketConnected = useAppStore((state) => state.socketConnected);
   const setCollapsed = useAppStore((state) => state.setCollapsed);
   const setAdminToken = useAppStore((state) => state.setAdminToken);
   const setTheme = useAppStore((state) => state.setTheme);
@@ -49,6 +50,7 @@ export function Layout({ children }: PropsWithChildren) {
       <Header
         collapsed={collapsed}
         isAdmin={Boolean(adminToken)}
+        socketConnected={socketConnected}
         theme={theme}
         onLogoutAdmin={() => {
           setAdminToken(undefined);
