@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from typing import Any
@@ -127,7 +128,15 @@ async def scrape_all_sources() -> list[Proxy]:
     settings = get_settings()
     timeout = aiohttp.ClientTimeout(total=settings.config.test.timeout)
     async with aiohttp.ClientSession(timeout=timeout, headers={"User-Agent": "ezProxy/1.0"}) as session:
-        results = [await fetch_source(session, source) for source in settings.config.sources]
+        results = await asyncio.gather(
+            *(fetch_source(session, source) for source in settings.config.sources),
+            return_exceptions=True,
+        )
 
-    proxies = [proxy for group in results for proxy in group]
+    proxies: list[Proxy] = []
+    for result in results:
+        if isinstance(result, Exception):
+            logger.warning("Source task failed: %s", result)
+            continue
+        proxies.extend(result)
     return dedupe_proxies(proxies)
