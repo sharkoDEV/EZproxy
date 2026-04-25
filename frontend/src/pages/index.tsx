@@ -9,7 +9,6 @@ export default function Dashboard() {
   const { data, isLoading } = useQuery({
     queryKey: ["proxies", "stats"],
     queryFn: fetchProxyStats,
-    refetchInterval: 5000,
   });
   const validStock = runtimeStats?.valid_stock ?? data?.alive ?? 0;
   const toTest = runtimeStats

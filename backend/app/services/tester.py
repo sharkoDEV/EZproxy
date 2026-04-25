@@ -137,7 +137,7 @@ async def test_proxy_candidates(proxies: list[Proxy]) -> list[Proxy]:
 
 def select_expired_proxies(session: Session) -> list[Proxy]:
     settings = get_settings()
-    interval = timedelta(minutes=settings.config.test.recheck_interval_minutes)
+    interval = timedelta(minutes=settings.config.test.cycle_interval_minutes)
     threshold = datetime.now(UTC) - interval
     statement = select(Proxy).where((Proxy.last_checked == None) | (Proxy.last_checked < threshold))  # noqa: E711
     return list(session.exec(statement).all())

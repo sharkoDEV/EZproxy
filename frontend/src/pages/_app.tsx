@@ -14,7 +14,12 @@ export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
     socket.connect();
     socket.on("progress", setProgress);
-    socket.on("stats", setRuntimeStats);
+    socket.on("stats", (stats) => {
+      setRuntimeStats(stats);
+      if (!stats.cycle_active) {
+        queryClient.invalidateQueries({ queryKey: ["proxies"] });
+      }
+    });
     socket.on("proxy_added", () => {
       queryClient.invalidateQueries({ queryKey: ["proxies"] });
     });

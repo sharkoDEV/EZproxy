@@ -31,7 +31,6 @@ export default function ProxiesPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["proxies", params],
     queryFn: () => fetchProxies(params),
-    refetchInterval: 5000,
   });
 
   function exportFile(format: "txt" | "csv") {

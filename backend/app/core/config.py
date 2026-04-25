@@ -30,10 +30,7 @@ class TestSettings(BaseModel):
     )
     timeout: float = 5.0
     max_workers: int = 200
-    recheck_interval_minutes: int = 5
-    scrape_interval_minutes: int = 10
-    stock_guard_interval_seconds: int = 60
-    min_valid_proxies: int = 1000
+    cycle_interval_minutes: int = 180
     scrape_on_startup: bool = True
     store_only_alive: bool = True
     delete_dead_after_check: bool = True
